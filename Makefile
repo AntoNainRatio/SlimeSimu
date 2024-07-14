@@ -1,16 +1,16 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -g
-LDFLAGS = -lglfw -lGL -lm -lpthread -ldl
-TARGET = main
-SRC = main.c ship.c
+CFLAGS = `pkg-config --cflags gtk+-3.0`
+LDFLAGS = `pkg-config --libs gtk+-3.0`
+TARGET = simu
+SRCS = main.c ship.c
 
-# Rules
 all: $(TARGET)
 
-$(TARGET): $(SRC)
-	$(CC) $(CFLAGS) -o $(TARGET) $(SRC) $(LDFLAGS)
+$(TARGET): $(SRCS)
+	$(CC) $(CFLAGS) -o $(TARGET) $(SRCS) $(LDFLAGS)
 
 clean:
 	rm -f $(TARGET)
 
 .PHONY: all clean
+
