@@ -31,11 +31,12 @@ struct ship* getNewShip(int x, int y, int angle, int speed)
 
 void updateShip(struct ship* a)
 {
-	a->x += (int)cos(a->angle)*a->speed;
-	a->y += (int)sin(a->angle)*a->speed;
+	a->x += (int)(cos((double)(a->angle)))*a->speed;
+	a->y += (int)(sin((double)(a->angle)))*a->speed;
 }
 
 void freeShip(struct ship* a)
 {
 	free(a);
-} 
+}
+
