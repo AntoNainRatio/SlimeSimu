@@ -4,6 +4,7 @@
 #define RAYON 3
 #define SPEED 2
 #define PI 3.1415927
+#define TURNRANGE 30
 
 struct ship {
 	int x;
@@ -15,8 +16,8 @@ struct ship {
 
 struct ship* alloc_ship();
 float getNewRandomAngle();
-struct ship* getNewShip(int x, int y, float angleRad);
-void updateShip(struct ship* a);
+struct ship* getNewShip(int x, int y, float angleDeg);
+void updateShip(struct ship* a, int width, int height);
 void drawShip(struct ship* a, GtkAllocation allocation, cairo_t *cr);
 //void redrawShip(struct ship* a, GtkAllocation allocation, cairo_t *cr);
 void freeShip(struct ship* a);

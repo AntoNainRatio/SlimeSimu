@@ -44,11 +44,16 @@ static gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer user_data)
 
 	cairo_set_source_rgb(cr, 0, 0, 0);
 	cairo_paint(cr);
-
+	*/
 	GtkAllocation allocation;
-    gtk_widget_get_allocation(widget, &allocation);*/
-    //int width = allocation.width;
-    //int height = allocation.height;
+    gtk_widget_get_allocation(widget, &allocation);
+    int width = allocation.width;
+    int height = allocation.height;
+
+	/*g_print("==================\n");
+	g_print("width = %d\n",width);
+	g_print("height = %d\n",height);
+	*/
 
 	/*double rayon = 3;
 	double x = 200;
@@ -67,8 +72,14 @@ static gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer user_data)
 gboolean on_move_ship(gpointer user_data)
 {
 	Simu* simu = user_data;
+	
+	GtkAllocation allocation;
+	gtk_widget_get_allocation(GTK_WIDGET(simu->ui.window), &allocation);
 
-	updateShip(simu->ship);
+	int width = allocation.width;
+	int height = allocation.height;
+
+	updateShip(simu->ship, width, height);
 
 	gtk_widget_queue_draw(GTK_WIDGET(simu->ui.area));
 
@@ -116,7 +127,7 @@ int main (int argc, char *argv[])
 	GtkDrawingArea* area = GTK_DRAWING_AREA(gtk_builder_get_object(builder,"drawing_area"));
 
 	float n = getNewRandomAngle();
-	struct ship* a = getNewShip(200, 200, n);
+	struct ship* a = getNewShip(200, 200, 355);
 
 	Simu simu =
 	{

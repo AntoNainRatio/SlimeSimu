@@ -16,31 +16,64 @@ float getNewRandomAngle()
 {
 	srand(time(NULL));
 	int degree = rand() % 360;
-	return degree * PI / 180;;
+	return degree;
 }
 
-struct ship* getNewShip(int x, int y, float angleRad)
+struct ship* getNewShip(int x, int y, float angleDeg)
 {
 	struct ship* res = alloc_ship();
 	res->x = x;
 	res->preX = x;
 	res->y = y;
 	res->preY = y;
-	if( angleRad < 0 || angleRad > 6.26573)
+	if( angleDeg < 0 || angleDeg > 360)
 	{
-		printf("Error initializing ship: Angle(radian) not between 0 and 6,26573");
+		printf("Error initializing ship: Angle(degree) not between 0 and 359(inlcuded)");
 	}
-	res->angle = angleRad;
+	res->angle = angleDeg;
 	return res;
 }
 
-void updateShip(struct ship* a)
+float degreeToRadian(int d)
 {
-	float addx = (cos((double)(a->angle)))*SPEED;
+	return d*PI/180;
+}
+
+void updateShip(struct ship* a, int width, int height)
+{
+	float addx = (cos((double)(degreeToRadian(a->angle))))*SPEED;
 	float tmpx = a->x + addx;
 	a->preX = a->x;
 	a->x = round(tmpx);
-	float addy = (sin((double)(a->angle)))*SPEED;
+
+	if(a->x < TURNRANGE)
+	{
+		if(a->angle <= 180 && a->angle >= 90)
+		{
+			a->angle = (int)(a->angle/2);
+		}
+		else if(a->angle > 180 && a->angle <=270)
+		{
+			a->angle = (int)((a->angle+360)/2) % 360;
+		}
+	}
+
+	if(a->x > width - TURNRANGE)
+	{
+		if(a->angle <= 90 && a->angle >= 0)
+		{
+			a->angle = (int)((a->angle + 180)/2);
+		}
+		else if(a->angle >= 270 && a->angle < 360)
+		{
+			a->angle = (int)((a->angle + 180)/2);
+		}
+	}
+
+	g_print("x = %d\n",a->x);
+	g_print("width = %d\n",width);
+
+	float addy = (sin((double)(degreeToRadian(a->angle))))*SPEED;
 	float tmpy = a->y - addy;
 	a->preY = a->y;
 	a->y = round(tmpy);
