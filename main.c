@@ -25,15 +25,28 @@ typedef struct Simu
 
 } Simu;
 
-gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer user_data)
+void redrawShip(gpointer user_data, cairo_t *cr)
 {
 	Simu* simu = user_data;
+	cairo_set_source_rgb(cr, 0, 0, 0);
+	//cairo_arc(cr, simu->ship->preX, simu->ship->preY, RAYON, 0, 2 * G_PI);
+	cairo_paint(cr);
+
+	cairo_set_source_rgb(cr, 1, 1, 1);
+	cairo_arc(cr, simu->ship->x, simu->ship->y, RAYON, 0, 2 * G_PI);
+	cairo_fill(cr);
+}
+
+static gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer user_data)
+{
+	redrawShip(user_data, cr);
+	/*Simu* simu = user_data;
 
 	cairo_set_source_rgb(cr, 0, 0, 0);
 	cairo_paint(cr);
 
 	GtkAllocation allocation;
-    gtk_widget_get_allocation(widget, &allocation);
+    gtk_widget_get_allocation(widget, &allocation);*/
     //int width = allocation.width;
     //int height = allocation.height;
 
@@ -46,21 +59,19 @@ gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer user_data)
 	cairo_fill(cr);
 	*/
 
-	drawShip(simu->ship, allocation, cr);
+	//drawShip(simu->ship, allocation, cr);
 
 	return FALSE;
 }
-
 
 gboolean on_move_ship(gpointer user_data)
 {
 	Simu* simu = user_data;
 
-	GtkAllocation allocation;
-	gtk_widget_get_allocation(simu->ui.window, &allocation);
-
 	updateShip(simu->ship);
-	g_print("Ship updated\n");
+
+	gtk_widget_queue_draw(GTK_WIDGET(simu->ui.area));
+
 	return TRUE;
 }
 
@@ -70,7 +81,6 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 
 	if( event->keyval == GDK_KEY_space)
 	{
-		g_print("Space pressed\n");
 		if ((simu->state) == PAUSE)
 		{
 			simu->state = PLAY;
@@ -105,7 +115,8 @@ int main (int argc, char *argv[])
 	gtk_window_set_default_size(window, 900, 900);
 	GtkDrawingArea* area = GTK_DRAWING_AREA(gtk_builder_get_object(builder,"drawing_area"));
 
-	struct ship* a = getNewShip(200, 200, 0);
+	float n = getNewRandomAngle();
+	struct ship* a = getNewShip(200, 200, n);
 
 	Simu simu =
 	{

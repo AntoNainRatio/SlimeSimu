@@ -3,18 +3,8 @@
 #include <math.h>
 #include <gtk/gtk.h>
 #include <cairo.h>
+#include "ship.h"
 
-
-#define RAYON 3
-#define SPEED 5
-
-struct ship {
-	int x;
-	int preX;
-	int y;
-	int preY;
-	int angle;
-};
 
 struct ship* alloc_ship()
 {
@@ -22,25 +12,38 @@ struct ship* alloc_ship()
 	return res;
 }
 
-struct ship* getNewShip(int x, int y, int angle)
+float getNewRandomAngle()
+{
+	srand(time(NULL));
+	int degree = rand() % 360;
+	return degree * PI / 180;;
+}
+
+struct ship* getNewShip(int x, int y, float angleRad)
 {
 	struct ship* res = alloc_ship();
 	res->x = x;
 	res->preX = x;
 	res->y = y;
 	res->preY = y;
-	if( angle < 0 || angle > 359)
+	if( angleRad < 0 || angleRad > 6.26573)
 	{
-		printf("Error initializing ship: Angle not between 0 and 360");
+		printf("Error initializing ship: Angle(radian) not between 0 and 6,26573");
 	}
-	res->angle = angle;
+	res->angle = angleRad;
 	return res;
 }
 
 void updateShip(struct ship* a)
 {
-	a->x += (int)(cos((double)(a->angle)))*SPEED;
-	a->y += (int)(sin((double)(a->angle)))*SPEED;
+	float addx = (cos((double)(a->angle)))*SPEED;
+	float tmpx = a->x + addx;
+	a->preX = a->x;
+	a->x = round(tmpx);
+	float addy = (sin((double)(a->angle)))*SPEED;
+	float tmpy = a->y - addy;
+	a->preY = a->y;
+	a->y = round(tmpy);
 }
 
 void drawShip(struct ship* a, GtkAllocation allocation, cairo_t *cr)
@@ -50,13 +53,13 @@ void drawShip(struct ship* a, GtkAllocation allocation, cairo_t *cr)
 	cairo_fill(cr);
 }
 
-void redrawShip(struct ship* a, GtkAllocation allocation, cairo_t *cr)
+/*void redrawShip(struct ship* a, GtkAllocation allocation, cairo_t *cr)
 {
 	cairo_set_source_rgb(cr, 0, 0, 0);
 	cairo_arc(cr, a->preX, a->preY, RAYON, 0, 2 * G_PI);
 	cairo_fill(cr);
 	drawShip(a, allocation, cr);
-}
+}*/
 
 void freeShip(struct ship* a)
 {
