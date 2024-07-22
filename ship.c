@@ -39,13 +39,8 @@ float degreeToRadian(int d)
 	return d*PI/180;
 }
 
-void updateShip(struct ship* a, int width, int height)
+void handleSides(struct ship* a, int width, int height)
 {
-	float addx = (cos((double)(degreeToRadian(a->angle))))*SPEED;
-	float tmpx = a->x + addx;
-	a->preX = a->x;
-	a->x = round(tmpx);
-
 	if(a->x < TURNRANGE)
 	{
 		if(a->angle <= 180 && a->angle >= 90)
@@ -64,19 +59,62 @@ void updateShip(struct ship* a, int width, int height)
 		{
 			a->angle = (int)((a->angle + 180)/2);
 		}
-		else if(a->angle >= 270 && a->angle < 360)
+		else if(a->angle >= 270 && a->angle <= 359)
 		{
 			a->angle = (int)((a->angle + 180)/2);
 		}
 	}
 
-	g_print("x = %d\n",a->x);
+	if(a->y < TURNRANGE)
+	{
+		if(a->angle >= 0 && a->angle <= 90)
+		{
+			a->angle = (int)(((a->angle+90)/2) - 90);
+			if(a->angle < 0)
+			{
+				a->angle += 360;
+			}
+		}
+		else if(a->angle <= 180 && a->angle > 90)
+		{
+			a->angle = (int)((a->angle + 270)/2);
+		}
+	}
+
+	if(a->y > height - TURNRANGE)
+	{
+		if(a->angle <= 270 && a->angle >= 180)
+		{
+			a->angle = (int)((a->angle + 90 )/2);
+		}
+		if(a->angle >270 && a-> angle < 360)
+		{
+			a->angle = (int)((a->angle + 450) /2) % 360;
+		}
+	}
+}
+
+void updateShip(struct ship* a, int width, int height)
+{
+	float addx = (cos((double)(degreeToRadian(a->angle))))*SPEED;
+	float tmpx = a->x + addx;
+	a->preX = a->x;
+	a->x = round(tmpx);
+
+	/*g_print("x = %d\n",a->x);
 	g_print("width = %d\n",width);
+	*/
 
 	float addy = (sin((double)(degreeToRadian(a->angle))))*SPEED;
 	float tmpy = a->y - addy;
 	a->preY = a->y;
 	a->y = round(tmpy);
+
+	/*g_print("height = %d\n",height);
+	g_print("y = %d\n",a->y);
+	*/
+
+	handleSides(a,width, height);
 }
 
 void drawShip(struct ship* a, GtkAllocation allocation, cairo_t *cr)
