@@ -14,7 +14,6 @@ struct ship* alloc_ship()
 
 float getNewRandomAngle()
 {
-	srand(time(NULL));
 	int degree = rand() % 360;
 	return degree;
 }

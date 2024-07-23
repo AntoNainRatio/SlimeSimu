@@ -26,6 +26,18 @@ typedef struct Simu
 
 } Simu;
 
+struct ship** getShipsList(int n)
+{
+	struct ship** res = malloc(n * sizeof(struct ship*));
+	for(int i = 0; i < n; i++)
+	{
+		float angle = getNewRandomAngle();
+		struct ship* tmp = getNewShip(450,450,angle);
+		res[i] = tmp;
+	}
+	return res;
+}
+
 void redrawShips(gpointer user_data, cairo_t *cr)
 {
 	Simu* simu = user_data;
@@ -114,6 +126,8 @@ int main (int argc, char *argv[])
 {
 	gtk_init (&argc, &argv);
 
+	srand(time(NULL));
+
 	GtkBuilder* builder = gtk_builder_new();
 	GError* error = NULL;
 	if(gtk_builder_add_from_file(builder, "template.glade", &error) == 0)
@@ -128,9 +142,6 @@ int main (int argc, char *argv[])
 	gtk_window_set_default_size(window, 900, 900);
 	GtkDrawingArea* area = GTK_DRAWING_AREA(gtk_builder_get_object(builder,"drawing_area"));
 	
-	float n = getNewRandomAngle();
-	struct ship* a = getNewShip(200, 200, n);
-	struct ship* b = getNewShip(200, 200, (float)(((int)(n+180))%360));
 	float shipNumber = 2;
 
 	Simu simu =
@@ -141,12 +152,9 @@ int main (int argc, char *argv[])
 			.window = window,
 			.area = area,
 		},
-		.ship = malloc(shipNumber*sizeof(struct ship*)),
+		.ship = getShipsList(shipNumber),
 		.shipNumber = shipNumber,
 	};
-
-	simu.ship[0] = a;
-	simu.ship[1] = b;
 
 	g_signal_connect(area, "draw", G_CALLBACK(on_draw), &simu);
 	g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
