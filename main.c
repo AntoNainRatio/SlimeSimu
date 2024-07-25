@@ -34,13 +34,15 @@ struct ship** getDebugShipsList()
 	return res;
 }
 
-struct ship** getShipsList(int n)
+struct ship** getShipsList(int n, int width, int height)
 {
 	struct ship** res = malloc(n * sizeof(struct ship*));
 	for(int i = 0; i < n; i++)
 	{
 		float angle = getNewRandomAngle();
-		struct ship* tmp = getNewShip(450,450,angle);
+		int x = getRandomPosition(TURNRANGE, width-TURNRANGE);
+		int y = getRandomPosition(TURNRANGE, height-TURNRANGE);
+		struct ship* tmp = getNewShip(x,y,angle);
 		res[i] = tmp;
 	}
 	return res;
@@ -147,10 +149,14 @@ int main (int argc, char *argv[])
 	}
 
 	GtkWindow* window = GTK_WINDOW(gtk_builder_get_object(builder,"window"));
-	gtk_window_set_default_size(window, 900, 900);
+
+	int width = 900;
+	int height = 900;
+
+	gtk_window_set_default_size(window, width, height);
 	GtkDrawingArea* area = GTK_DRAWING_AREA(gtk_builder_get_object(builder,"drawing_area"));
 
-	float shipNumber = 20;
+	float shipNumber = 30;
 
 	Simu simu =
 	{
@@ -160,7 +166,7 @@ int main (int argc, char *argv[])
 			.window = window,
 			.area = area,
 		},
-		.ship = getShipsList(shipNumber),
+		.ship = getShipsList(shipNumber, width, height),
 		.shipNumber = shipNumber,
 	};
 

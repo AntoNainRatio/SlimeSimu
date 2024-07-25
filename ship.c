@@ -18,6 +18,11 @@ float getNewRandomAngle()
 	return degree;
 }
 
+int getRandomPosition(int mini, int maxi)
+{
+	return (rand()%(maxi-mini))+mini;
+}
+
 struct ship* getNewShip(int x, int y, float angleDeg)
 {
 	struct ship* res = alloc_ship();

@@ -17,6 +17,7 @@ struct ship {
 
 struct ship* alloc_ship();
 float getNewRandomAngle();
+int getRandomPosition(int mini,int maxi);
 struct ship* getNewShip(int x, int y, float angleDeg);
 void handlesSides(struct ship* a, int width, int height);
 void updateShip(struct ship* a, int width, int height);
