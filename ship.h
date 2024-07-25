@@ -12,6 +12,7 @@ struct ship {
 	int y;
 	int preY;
 	float angle;
+	float preAngle;
 };
 
 struct ship* alloc_ship();

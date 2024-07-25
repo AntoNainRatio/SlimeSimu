@@ -30,6 +30,7 @@ struct ship* getNewShip(int x, int y, float angleDeg)
 		printf("Error initializing ship: Angle(degree) not between 0 and 359(inlcuded)");
 	}
 	res->angle = angleDeg;
+	res->preAngle = angleDeg;
 	return res;
 }
 
@@ -38,59 +39,50 @@ float degreeToRadian(int d)
 	return d*PI/180;
 }
 
+float getInterAngle(float angle)
+{
+	return (int)(angle + 360) % 360;
+}
+
+float absAngle(float angle)
+{
+	if(angle < 0)
+	{
+		return -angle;
+	}
+	return angle;
+}
+
 void handleSides(struct ship* a, int width, int height)
 {
-	if(a->x < TURNRANGE)
+	if(a->x < TURNRANGE || a->x > width - TURNRANGE)
 	{
-		if(a->angle <= 180 && a->angle >= 90)
+		float targetAngle = getInterAngle(a->preAngle + (90 - a->preAngle)*2);
+		if(a->angle != targetAngle)
 		{
-			a->angle = (int)(a->angle/2);
-		}
-		else if(a->angle > 180 && a->angle <=270)
-		{
-			a->angle = (int)((a->angle+360)/2) % 360;
+			a->angle = a->angle + (targetAngle - a->preAngle) / 40;
 		}
 	}
-
-	if(a->x > width - TURNRANGE)
+	else if(a->y < TURNRANGE || a->y > height - TURNRANGE)
 	{
-		if(a->angle <= 90 && a->angle >= 0)
+		float targetAngle = getInterAngle(a->preAngle + (180 - a->preAngle)*2);
+		if( a->angle != targetAngle)
 		{
-			a->angle = (int)((a->angle + 180)/2);
-		}
-		else if(a->angle >= 270 && a->angle <= 359)
-		{
-			a->angle = (int)((a->angle + 180)/2);
-		}
-	}
-
-	if(a->y < TURNRANGE)
-	{
-		if(a->angle >= 0 && a->angle <= 90)
-		{
-			a->angle = (int)(((a->angle+90)/2) - 90);
-			if(a->angle < 0)
+			if(absAngle(targetAngle - a->preAngle) > 180)
 			{
-				a->angle += 360;
+				a->angle = getInterAngle(a->angle - (targetAngle - a->preAngle) / 40);
+			}
+			else
+			{
+				a->angle = getInterAngle(a->angle + (targetAngle - a->preAngle) / 40);
 			}
 		}
-		else if(a->angle <= 180 && a->angle > 90)
-		{
-			a->angle = (int)((a->angle + 270)/2);
-		}
+	}
+	else if (a->preAngle != a->angle)
+	{
+		a->preAngle = a->angle;
 	}
 
-	if(a->y > height - TURNRANGE)
-	{
-		if(a->angle <= 270 && a->angle >= 180)
-		{
-			a->angle = (int)((a->angle + 90 )/2);
-		}
-		if(a->angle >270 && a-> angle < 360)
-		{
-			a->angle = (int)((a->angle + 450) /2) % 360;
-		}
-	}
 }
 
 void updateShip(struct ship* a, int width, int height)

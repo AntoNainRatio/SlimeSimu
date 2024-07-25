@@ -26,6 +26,14 @@ typedef struct Simu
 
 } Simu;
 
+struct ship** getDebugShipsList()
+{
+	struct ship** res = malloc(1 * sizeof(struct ship*));
+	//res[0] = getNewShip(450,100,200);
+	res[0] = getNewShip(450,800,160);
+	return res;
+}
+
 struct ship** getShipsList(int n)
 {
 	struct ship** res = malloc(n * sizeof(struct ship*));
@@ -141,8 +149,8 @@ int main (int argc, char *argv[])
 	GtkWindow* window = GTK_WINDOW(gtk_builder_get_object(builder,"window"));
 	gtk_window_set_default_size(window, 900, 900);
 	GtkDrawingArea* area = GTK_DRAWING_AREA(gtk_builder_get_object(builder,"drawing_area"));
-	
-	float shipNumber = 2;
+
+	float shipNumber = 20;
 
 	Simu simu =
 	{
