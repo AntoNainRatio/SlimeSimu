@@ -3,8 +3,10 @@
 #include <math.h>
 #include <gtk/gtk.h>
 #include <cairo.h>
+#include <stdbool.h>
 #include "ship.h"
 
+#define ERRORPERCENT 0.02
 
 struct ship* alloc_ship()
 {
@@ -36,6 +38,8 @@ struct ship* getNewShip(int x, int y, float angleDeg)
 	}
 	res->angle = angleDeg;
 	res->preAngle = angleDeg;
+	res->targetAngle = angleDeg;
+	res->isInCorner = 0;
 	return res;
 }
 
@@ -58,36 +62,150 @@ float absAngle(float angle)
 	return angle;
 }
 
+
 void handleSides(struct ship* a, int width, int height)
 {
-	if(a->x < TURNRANGE || a->x > width - TURNRANGE)
+	float ANGLETETA = absAngle(a->targetAngle - a->preAngle) * ERRORPERCENT;
+	if(a->x < TURNRANGE && a->y < TURNRANGE)
 	{
-		float targetAngle = getInterAngle(a->preAngle + (90 - a->preAngle)*2);
-		if(a->angle != targetAngle)
+		a->targetAngle = 315;
+		if(a->isInCorner == 0)
 		{
-			a->angle = a->angle + (targetAngle - a->preAngle) / 40;
+			a->isInCorner = 1;
+			a->preAngle = a->angle;
 		}
+		ANGLETETA = absAngle(a->targetAngle - a->preAngle) * ERRORPERCENT;
+		if( a->angle <= a->targetAngle - ANGLETETA || a->angle >= a->targetAngle + ANGLETETA)
+		{
+			a->angle = a->angle + (a->targetAngle- a->preAngle) / 40;
+		}
+		else
+		{
+			a->targetAngle = a->angle;
+		}
+
+	}
+	else if(a->x < TURNRANGE && a->y > height - TURNRANGE)
+	{
+		a->targetAngle = 45;
+		if(a->isInCorner == 0)
+		{
+			a->isInCorner = 1;
+			a->preAngle = a->angle;
+		}
+		ANGLETETA = absAngle(a->targetAngle - a->preAngle) * ERRORPERCENT;
+		if( a->angle <= a->targetAngle - ANGLETETA || a->angle >= a->targetAngle + ANGLETETA)
+		{
+			a->angle = a->angle + (a->targetAngle- a->preAngle) / 40;
+		}
+		else
+		{
+			a->targetAngle = a->angle;
+		}
+
+	}
+	else if(a->x > width - TURNRANGE && a->y < TURNRANGE)
+	{
+		a->targetAngle = 225;
+		if(a->isInCorner == 0)
+		{
+			a->isInCorner = 1;
+			a->preAngle = a->angle;
+		}
+		ANGLETETA = absAngle(a->targetAngle - a->preAngle) * ERRORPERCENT;
+		if( a->angle <= a->targetAngle - ANGLETETA || a->angle >= a->targetAngle + ANGLETETA)
+		{
+			a->angle = a->angle + (a->targetAngle- a->preAngle) / 40;
+		}
+		else
+		{
+			a->targetAngle = a->angle;
+		}
+
+	}
+	else if(a->x > width - TURNRANGE && a->y > height - TURNRANGE)
+	{
+		a->targetAngle = 135;
+		if(a->isInCorner == 0)
+		{
+			a->isInCorner = 1;
+			a->preAngle = a->angle;
+		}
+		ANGLETETA = absAngle(a->targetAngle - a->preAngle) * ERRORPERCENT;
+		if( a->angle <= a->targetAngle - ANGLETETA || a->angle >= a->targetAngle + ANGLETETA)
+		{
+			a->angle = a->angle + (a->targetAngle- a->preAngle) / 40;
+		}
+		else
+		{
+			a->targetAngle = a->angle;
+		}
+	}
+	else if(a->x < TURNRANGE || a->x > width - TURNRANGE)
+	{
+		if(a->isInCorner == 0)
+		{
+			a->targetAngle = getInterAngle(a->preAngle + (90 - a->preAngle)*2);
+			ANGLETETA = absAngle(a->targetAngle - a->preAngle) * ERRORPERCENT;
+		}
+		if( a->angle <= a->targetAngle - ANGLETETA || a->angle >= a->targetAngle + ANGLETETA)
+		{
+			a->angle = a->angle + (a->targetAngle - a->preAngle) / 40;
+		}
+		else
+		{
+			a->targetAngle = a->angle;
+		}
+
 	}
 	else if(a->y < TURNRANGE || a->y > height - TURNRANGE)
 	{
-		float targetAngle = getInterAngle(a->preAngle + (180 - a->preAngle)*2);
-		if( a->angle != targetAngle)
+		if(a->isInCorner == 0)
 		{
-			if(absAngle(targetAngle - a->preAngle) > 180)
+			a->targetAngle = getInterAngle(a->preAngle + (180 - a->preAngle)*2);
+			ANGLETETA = absAngle(a->targetAngle - a->preAngle) * ERRORPERCENT;
+		}
+		if( a->angle <= a->targetAngle - ANGLETETA || a->angle >= a->targetAngle + ANGLETETA)
+		{
+			if(absAngle(a->targetAngle - a->preAngle) > 180)
 			{
-				a->angle = getInterAngle(a->angle - (targetAngle - a->preAngle) / 40);
+				a->angle = getInterAngle(a->angle - (a->targetAngle - a->preAngle) / 40);
 			}
 			else
 			{
-				a->angle = getInterAngle(a->angle + (targetAngle - a->preAngle) / 40);
+				a->angle = getInterAngle(a->angle + (a->targetAngle - a->preAngle) / 40);
 			}
 		}
+		else
+		{
+			a->targetAngle = a->angle;
+		}
 	}
-	else if (a->preAngle != a->angle)
+	else
 	{
-		a->preAngle = a->angle;
+		if( a->angle <= a->targetAngle - ANGLETETA || a->angle >= a->targetAngle + ANGLETETA)
+		{
+			a->angle = getInterAngle(a->angle + (a->targetAngle - a->preAngle) / 40);
+		}
+		else
+		{
+			a->targetAngle = a->angle;
+			if(a->preAngle != a->angle)
+			{
+				a->preAngle = a->angle;
+			}
+		}
+		if(a->isInCorner == 1)
+		{
+			a->isInCorner = 0;
+		}
 	}
 
+
+	/*g_print("=============================\n");
+	g_print("preAngle = %f\n",a->preAngle);
+	g_print("angle = %f\n",a->angle);
+	g_print("targetAngle = %f\n",a->targetAngle);*/
 }
 
 void updateShip(struct ship* a, int width, int height)

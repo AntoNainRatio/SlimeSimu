@@ -30,7 +30,7 @@ struct ship** getDebugShipsList()
 {
 	struct ship** res = malloc(1 * sizeof(struct ship*));
 	//res[0] = getNewShip(450,100,200);
-	res[0] = getNewShip(450,800,160);
+	res[0] = getNewShip(450,450,45);
 	return res;
 }
 
@@ -156,7 +156,7 @@ int main (int argc, char *argv[])
 	gtk_window_set_default_size(window, width, height);
 	GtkDrawingArea* area = GTK_DRAWING_AREA(gtk_builder_get_object(builder,"drawing_area"));
 
-	float shipNumber = 30;
+	float shipNumber = 300;
 
 	Simu simu =
 	{
