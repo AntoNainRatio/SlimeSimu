@@ -1,5 +1,6 @@
 #include <gtk/gtk.h>
 #include <cairo.h>
+#include "phero.h"
 #include "ship.h"
 
 #define SHIP_PERIOD 4
@@ -14,6 +15,8 @@ typedef struct UserInterface
 {
 	GtkWindow* window;
 	GtkDrawingArea* area;
+	int width;
+	int height;
 } UserInterface;
 
 typedef struct Simu
@@ -23,6 +26,7 @@ typedef struct Simu
 	UserInterface ui;
 	struct ship** ship;
 	int shipNumber;
+	float* board;
 
 } Simu;
 
@@ -39,7 +43,7 @@ struct ship** getShipsList(int n, int width, int height)
 	struct ship** res = malloc(n * sizeof(struct ship*));
 	for(int i = 0; i < n; i++)
 	{
-		float angle = getNewRandomAngle();
+		float angle = getNewRandomAngle(0,359);
 		int x = getRandomPosition(TURNRANGE, width-TURNRANGE);
 		int y = getRandomPosition(TURNRANGE, height-TURNRANGE);
 		struct ship* tmp = getNewShip(x,y,angle);
@@ -66,6 +70,10 @@ void redrawShips(gpointer user_data, cairo_t *cr)
 static gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer user_data)
 {
 	redrawShips(user_data, cr);
+
+	Simu* simu = user_data;
+
+	drawBoard(simu->board, simu->ui.width, simu->ui.height, cr);
 	/*Simu* simu = user_data;
 
 	cairo_set_source_rgb(cr, 0, 0, 0);
@@ -104,6 +112,7 @@ gboolean on_move_ship(gpointer user_data)
 	{
 		updateShip(simu->ship[i], width, height);
 	}
+	updateBoard(simu->board, width, height);
 
 	gtk_widget_queue_draw(GTK_WIDGET(simu->ui.area));
 
@@ -165,9 +174,12 @@ int main (int argc, char *argv[])
 		{
 			.window = window,
 			.area = area,
+			.width = width,
+			.height = height,
 		},
 		.ship = getShipsList(shipNumber, width, height),
 		.shipNumber = shipNumber,
+		.board = getNewBoard(width, height);
 	};
 
 	g_signal_connect(area, "draw", G_CALLBACK(on_draw), &simu);

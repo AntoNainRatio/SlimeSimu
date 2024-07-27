@@ -1,7 +1,7 @@
 #ifndef HEADER_FILE_NAME
 #define HEADER_FILE_NAME
 
-#define RAYON 3
+#define RAYON 2
 #define SPEED 2
 #define PI 3.1415927
 #define TURNRANGE 30
@@ -18,7 +18,7 @@ struct ship {
 };
 
 struct ship* alloc_ship();
-float getNewRandomAngle();
+float getNewRandomAngle(float mini, float maxi);
 int getRandomPosition(int mini,int maxi);
 struct ship* getNewShip(int x, int y, float angleDeg);
 void handlesSides(struct ship* a, int width, int height);

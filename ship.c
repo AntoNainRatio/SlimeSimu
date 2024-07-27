@@ -14,9 +14,9 @@ struct ship* alloc_ship()
 	return res;
 }
 
-float getNewRandomAngle()
+float getNewRandomAngle(float mini, float maxi)
 {
-	int degree = rand() % 360;
+	float degree = (rand() % (int)(maxi-mini)) + mini;
 	return degree;
 }
 
@@ -63,7 +63,7 @@ float absAngle(float angle)
 }
 
 
-void handleSides(struct ship* a, int width, int height)
+/*void handleSides(struct ship* a, int width, int height)
 {
 	float ANGLETETA = absAngle(a->targetAngle - a->preAngle) * ERRORPERCENT;
 	if(a->x < TURNRANGE && a->y < TURNRANGE)
@@ -202,10 +202,30 @@ void handleSides(struct ship* a, int width, int height)
 	}
 
 
-	/*g_print("=============================\n");
+	g_print("=============================\n");
 	g_print("preAngle = %f\n",a->preAngle);
 	g_print("angle = %f\n",a->angle);
-	g_print("targetAngle = %f\n",a->targetAngle);*/
+	g_print("targetAngle = %f\n",a->targetAngle);
+}*/
+
+void handleSides(struct ship* a, int width, int height)
+{
+	if(a->x - RAYON <= 0)
+	{
+		a->angle =(int)(getNewRandomAngle(20, 160) + 180) % 360;
+	}
+	else if(a->x + RAYON >= width)
+	{
+		a->angle = getNewRandomAngle(110, 250);
+	}
+	if(a->y - RAYON <= 0)
+	{
+		a->angle = getNewRandomAngle(200, 340);
+	}
+	else if(a->y + RAYON >= height)
+	{
+		a->angle = getNewRandomAngle(20, 160);
+	}
 }
 
 void updateShip(struct ship* a, int width, int height)
