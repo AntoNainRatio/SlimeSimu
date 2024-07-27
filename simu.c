@@ -1,0 +1,78 @@
+#include <gtk/gtk.h>
+#include <cairo.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include "phero.h"
+#include "ship.h"
+#include "simu.h"
+
+struct ship** getDebugShipsList()
+{
+	struct ship** res = malloc(1 * sizeof(struct ship*));
+	res[0] = getNewShip(450, 450, 45);
+	return res;
+}
+
+struct ship** getShipsList(int n, int width, int height)
+{
+	struct ship** res = malloc(n * sizeof(struct ship*));
+	for(int i = 0; i < n; i++)
+	{
+		float angle = getNewRandomAngle(0, 359);
+		int x = getRandomPosition(0, width);
+		int y = getRandomPosition(0, height);
+		struct ship* tmp = getNewShip(x, y, angle);
+		res[i] = tmp;
+	}
+	return res;
+}
+
+Simu getNewSimu(GtkWindow* window, GtkDrawingArea* area, int width, int height, int shipNumber)
+{
+	Simu simu =
+	{
+		.state = PAUSE,
+		.ui =
+		{
+			.window = window,
+			.area = area,
+			.width = width,
+			.height = height,
+		},
+		.ship = getShipsList(shipNumber, width, height),
+		.shipNumber = shipNumber,
+		.board = getNewBoard(width, height),
+	};
+	return simu;
+}
+
+void placePheroOnBoard(float* board, struct ship* ship, int width, int height)
+{
+	board[ship->y * width + ship->x] = 1.0;
+}
+
+void updateSimu(Simu* simu)
+{
+	for(int i = 0; i < simu->shipNumber; i++)
+	{
+		updateShip(simu->ship[i], simu->ui.width, simu->ui.height);
+		placePheroOnBoard(simu->board, simu->ship[i], simu->ui.width, simu->ui.height);
+	}
+	evapoBoard(simu->board, simu->ui.width, simu->ui.height);
+}
+
+void redraw(gpointer user_data, cairo_t *cr)
+{
+	Simu* simu = user_data;
+	cairo_set_source_rgb(cr, 0, 0, 0);
+	cairo_paint(cr);
+
+	drawBoard(simu->board, simu->ui.width, simu->ui.height, cr);
+
+	cairo_set_source_rgb(cr, 1, 1, 1);
+	for(int i = 0; i < simu->shipNumber; i++)
+	{
+		cairo_arc(cr, simu->ship[i]->x, simu->ship[i]->y, RAYON, 0, 2 * G_PI);
+		cairo_fill(cr);
+	}
+}

@@ -3,6 +3,6 @@
 
 float* getNewBoard(int width, int height);
 void evapoBoard(float* board, int width, int height);
-void drawBoard(float* board, int width, int height, GtkAllocation allocation, cairo_t *cr);
+void drawBoard(float* board, int width, int height, cairo_t *cr);
 
 #endif
