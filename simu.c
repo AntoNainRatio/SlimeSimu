@@ -2,14 +2,18 @@
 #include <cairo.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 #include "phero.h"
 #include "ship.h"
 #include "simu.h"
 
 struct ship** getDebugShipsList()
 {
-	struct ship** res = malloc(1 * sizeof(struct ship*));
-	res[0] = getNewShip(450, 450, 45);
+	struct ship** res = malloc(360 * sizeof(struct ship*));
+	for(int i = 0; i < 360; i++)
+	{
+		res[i] = getNewShip(450, 450, i);
+	}
 	return res;
 }
 
@@ -39,7 +43,7 @@ Simu getNewSimu(GtkWindow* window, GtkDrawingArea* area, int width, int height, 
 			.width = width,
 			.height = height,
 		},
-		.ship = getShipsList(shipNumber, width, height),
+		.ship = getDebugShipsList(shipNumber, width, height),
 		.shipNumber = shipNumber,
 		.board = getNewBoard(width, height),
 	};
@@ -48,7 +52,7 @@ Simu getNewSimu(GtkWindow* window, GtkDrawingArea* area, int width, int height, 
 
 void placePheroOnBoard(float* board, struct ship* ship, int width, int height)
 {
-	board[ship->y * width + ship->x] = 1.0;
+	board[(int)(round(ship->y) * width + round(ship->x))] = 1.0;
 }
 
 void updateSimu(Simu* simu)
@@ -72,7 +76,16 @@ void redraw(gpointer user_data, cairo_t *cr)
 	cairo_set_source_rgb(cr, 1, 1, 1);
 	for(int i = 0; i < simu->shipNumber; i++)
 	{
-		cairo_rectangle(cr, simu->ship[i]->x, simu->ship[i]->y, COTE, COTE);
+		cairo_rectangle(cr, round(simu->ship[i]->x), round(simu->ship[i]->y), COTE, COTE);
 		cairo_fill(cr);
 	}
+}
+
+void freeSimu(Simu simu)
+{
+	for(int i = 0; i < simu.shipNumber; i++)
+	{
+		freeShip(simu.ship[i]);
+	}
+	free(simu.board);
 }

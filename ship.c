@@ -25,21 +25,16 @@ int getRandomPosition(int mini, int maxi)
 	return (rand()%(maxi-mini))+mini;
 }
 
-struct ship* getNewShip(int x, int y, float angleDeg)
+struct ship* getNewShip(float x, float y, float angleDeg)
 {
 	struct ship* res = alloc_ship();
 	res->x = x;
-	res->preX = x;
 	res->y = y;
-	res->preY = y;
 	if( angleDeg < 0 || angleDeg > 360)
 	{
 		printf("Error initializing ship: Angle(degree) not between 0 and 359(inlcuded)");
 	}
 	res->angle = angleDeg;
-	res->preAngle = angleDeg;
-	res->targetAngle = angleDeg;
-	res->isInCorner = 0;
 	return res;
 }
 
@@ -210,39 +205,35 @@ float absAngle(float angle)
 
 void handleSides(struct ship* a, int width, int height)
 {
-	if(a->x <= 0 && (a->angle > 90 && a->angle < 270))
+	if(round(a->x) <= 0 && (a->angle > 90 && a->angle < 270))
 	{
-		a->angle =(int)(getNewRandomAngle(20, 160) + 180) % 360;
+		a->angle = (rand()%160+280) % 360;
 	}
-	else if(a->x + COTE >= width && (a->angle < 90 || a->angle > 270))
+	else if(round(a->x) + COTE >= width && (a->angle < 90 || a->angle > 270))
 	{
 		a->angle = getNewRandomAngle(110, 250);
 	}
-	if(a->y <= 0 && (a->angle < 180 && a->angle > 0))
+	if(round(a->y) <= 0 && (a->angle > 180))
 	{
-		a->angle = getNewRandomAngle(200, 340);
+		a->angle = getNewRandomAngle(10, 170);
 	}
-	else if(a->y + COTE >= height && (a->angle > 180))
+	else if(round(a->y) + COTE >= height  && (a->angle < 180))
 	{
-		a->angle = getNewRandomAngle(20, 160);
+		a->angle = getNewRandomAngle(190, 350);
 	}
 }
 
 void updateShip(struct ship* a, int width, int height)
 {
 	float addx = (cos((double)(degreeToRadian(a->angle))))*SPEED;
-	float tmpx = a->x + addx;
-	a->preX = a->x;
-	a->x = round(tmpx);
+	a->x += addx;
 
 	/*g_print("x = %d\n",a->x);
 	g_print("width = %d\n",width);
 	*/
 
 	float addy = (sin((double)(degreeToRadian(a->angle))))*SPEED;
-	float tmpy = a->y - addy;
-	a->preY = a->y;
-	a->y = round(tmpy);
+	a->y += addy;
 
 	/*g_print("height = %d\n",height);
 	g_print("y = %d\n",a->y);
@@ -254,7 +245,7 @@ void updateShip(struct ship* a, int width, int height)
 void drawShip(struct ship* a, GtkAllocation allocation, cairo_t *cr)
 {
 	cairo_set_source_rgb(cr, 1, 1, 1);
-	cairo_rectangle(cr, a->x, a->y, COTE, COTE);
+	cairo_rectangle(cr, round(a->x), round(a->y), COTE, COTE);
 	cairo_fill(cr);
 }
 

@@ -71,7 +71,7 @@ int main (int argc, char *argv[])
 	gtk_window_set_default_size(window, width, height);
 	GtkDrawingArea* area = GTK_DRAWING_AREA(gtk_builder_get_object(builder,"drawing_area"));
 
-	float shipNumber = 300;
+	float shipNumber = 360;
 
 	Simu simu = getNewSimu(window, area, width, height, shipNumber);
 
@@ -84,5 +84,6 @@ int main (int argc, char *argv[])
 
 	gtk_main ();
 
+	freeSimu(simu);
 	return 0;
 }

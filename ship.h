@@ -7,20 +7,15 @@
 #define TURNRANGE 30
 
 struct ship {
-	int x;
-	int preX;
-	int y;
-	int preY;
+	float x;
+	float y;
 	float angle;
-	float preAngle;
-	float targetAngle;
-	int isInCorner;
 };
 
 struct ship* alloc_ship();
 float getNewRandomAngle(float mini, float maxi);
 int getRandomPosition(int mini,int maxi);
-struct ship* getNewShip(int x, int y, float angleDeg);
+struct ship* getNewShip(float x, float y, float angleDeg);
 void handlesSides(struct ship* a, int width, int height);
 void updateShip(struct ship* a, int width, int height);
 void drawShip(struct ship* a, GtkAllocation allocation, cairo_t *cr);
