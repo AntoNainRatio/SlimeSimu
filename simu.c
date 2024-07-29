@@ -72,7 +72,7 @@ void redraw(gpointer user_data, cairo_t *cr)
 	cairo_set_source_rgb(cr, 1, 1, 1);
 	for(int i = 0; i < simu->shipNumber; i++)
 	{
-		cairo_arc(cr, simu->ship[i]->x, simu->ship[i]->y, RAYON, 0, 2 * G_PI);
+		cairo_rectangle(cr, simu->ship[i]->x, simu->ship[i]->y, COTE, COTE);
 		cairo_fill(cr);
 	}
 }

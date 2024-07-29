@@ -210,19 +210,19 @@ float absAngle(float angle)
 
 void handleSides(struct ship* a, int width, int height)
 {
-	if(a->x - RAYON <= 0 && (a->angle > 90 && a->angle < 270))
+	if(a->x <= 0 && (a->angle > 90 && a->angle < 270))
 	{
 		a->angle =(int)(getNewRandomAngle(20, 160) + 180) % 360;
 	}
-	else if(a->x + RAYON >= width && (a->angle < 90 || a->angle > 270))
+	else if(a->x + COTE >= width && (a->angle < 90 || a->angle > 270))
 	{
 		a->angle = getNewRandomAngle(110, 250);
 	}
-	if(a->y - RAYON <= 0 && (a->angle < 180 && a->angle > 0))
+	if(a->y <= 0 && (a->angle < 180 && a->angle > 0))
 	{
 		a->angle = getNewRandomAngle(200, 340);
 	}
-	else if(a->y + RAYON >= height && (a->angle > 180))
+	else if(a->y + COTE >= height && (a->angle > 180))
 	{
 		a->angle = getNewRandomAngle(20, 160);
 	}
@@ -254,7 +254,7 @@ void updateShip(struct ship* a, int width, int height)
 void drawShip(struct ship* a, GtkAllocation allocation, cairo_t *cr)
 {
 	cairo_set_source_rgb(cr, 1, 1, 1);
-	cairo_arc(cr, a->x, a->y, RAYON, 0, 2 * G_PI);
+	cairo_rectangle(cr, a->x, a->y, COTE, COTE);
 	cairo_fill(cr);
 }
 

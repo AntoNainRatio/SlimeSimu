@@ -1,7 +1,7 @@
 #ifndef HEADER_FILE_NAME
 #define HEADER_FILE_NAME
 
-#define RAYON 2
+#define COTE 1
 #define SPEED 2
 #define PI 3.1415927
 #define TURNRANGE 30

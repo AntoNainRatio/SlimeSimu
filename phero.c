@@ -38,7 +38,7 @@ void drawBoard(float* b, int width, int height, cairo_t *cr)
 			if(b[j * width + i] != 0)
 			{
 				cairo_set_source_rgba(cr, 1, 1, 1,b[j * width + i]);
-				cairo_arc(cr, i, j, 2, 0, 2 * G_PI);
+				cairo_rectangle(cr, i, j, 1, 1);
 				cairo_fill(cr);
 			}
 		}
