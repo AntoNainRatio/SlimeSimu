@@ -1,8 +1,14 @@
 #ifndef PHERO_H
 #define PHERO_H
 
-float* getNewBoard(int width, int height);
-void evapoBoard(float* board, int width, int height);
-void drawBoard(float* board, int width, int height, cairo_t *cr);
+typedef struct square
+{
+	float val;
+	int update;
+} square;
+
+square* getNewBoard(int width, int height);
+void evapoBoard(square* board, int width, int height);
+void drawBoard(square* board, int width, int height, cairo_t *cr);
 
 #endif

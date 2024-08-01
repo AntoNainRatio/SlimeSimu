@@ -42,17 +42,19 @@ Simu getNewSimu(GtkWindow* window, GtkDrawingArea* area, int width, int height, 
 			.area = area,
 			.width = width,
 			.height = height,
+			.firstDraw = 1,
+			.surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height),
 		},
-		.ship = getDebugShipsList(shipNumber, width, height),
+		.ship = getShipsList(shipNumber, width, height),
 		.shipNumber = shipNumber,
 		.board = getNewBoard(width, height),
 	};
 	return simu;
 }
 
-void placePheroOnBoard(float* board, struct ship* ship, int width, int height)
+void placePheroOnBoard(struct square* board, struct ship* ship, int width, int height)
 {
-	board[(int)(round(ship->y) * width + round(ship->x))] = 1.0;
+	board[(int)(round(ship->y) * width + round(ship->x))].val = 1.0;
 }
 
 void updateSimu(Simu* simu)
@@ -68,17 +70,18 @@ void updateSimu(Simu* simu)
 void redraw(gpointer user_data, cairo_t *cr)
 {
 	Simu* simu = user_data;
-	cairo_set_source_rgb(cr, 0, 0, 0);
-	cairo_paint(cr);
+	//cairo_set_source_rgb(cr, 0, 0, 0);
+	//cairo_paint(cr);
 
-	drawBoard(simu->board, simu->ui.width, simu->ui.height, cr);
 
-	cairo_set_source_rgb(cr, 1, 1, 1);
+	/*cairo_set_source_rgb(cr, 1, 1, 1);
 	for(int i = 0; i < simu->shipNumber; i++)
 	{
 		cairo_rectangle(cr, round(simu->ship[i]->x), round(simu->ship[i]->y), COTE, COTE);
-		cairo_fill(cr);
 	}
+	cairo_fill(cr);*/
+
+	drawBoard(simu->board, simu->ui.width, simu->ui.height, cr);
 }
 
 void freeSimu(Simu simu)
@@ -87,5 +90,6 @@ void freeSimu(Simu simu)
 	{
 		freeShip(simu.ship[i]);
 	}
+	cairo_surface_destroy(simu.ui.surface);
 	free(simu.board);
 }

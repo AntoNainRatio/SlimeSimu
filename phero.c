@@ -2,45 +2,109 @@
 #include <cairo.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
+#include "phero.h"
 
 #define EVAPOFACTOR 0.025
 
-float* getNewBoard(int width, int height)
+square* getNewBoard(int width, int height)
 {
-	float* res = calloc(width * height, sizeof(float));
+	square* res = malloc(width * height * sizeof(struct square));
+	for(int i = 0; i < height; i++)
+	{
+		for(int j = 0; j < width; j++)
+		{
+			square tmp = 
+			{
+				.val = 0,
+				.update = 0,
+			};
+			res[i * width +j] = tmp;
+		}
+	}
 	return res;
 }
 
-void evapoBoard(float* board, int width, int height)
+bool hasNotNullNeighbor(square* board, int x, int y, int width, int height)
+{
+	for(int i = -1; i < 2; i++)
+	{
+		for(int j = -1; j < 2; j++)
+		{
+			if(board[(y + j)*width + (x + i)].val != 0)
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+float getBlurValue(square* board, int x, int y, int width, int height)
+{
+	float res = 0.0;
+	int count = 0;
+	for(int i = -1; i < 2; i++)
+	{
+		for(int j = -1; j < 2; j++)
+		{
+			int newX = x + i;
+			int newY = y + j;
+			if(newX >= 0 && newX < width && newY >= 0 && newY < height)
+			{
+				res += board[(newY) * width + (newX)].val;
+				count += 1;
+			}
+		}
+	}
+	return res / count;
+}
+
+void evapoBoard(square* board, int width, int height)
 {
 	for(int i = 0; i < width; i++)
 	{
 		for(int j = 0; j < height; j++)
 		{
-			if(board[j*width + i] >= EVAPOFACTOR)
+			/*if(brd[j * width + i] >= EVAPOFACTOR)
 			{
 				board[j * width + i] -= EVAPOFACTOR;
-			}
-			else
+			}*/
+			
+
+			//float tmp = getBlurValue(board, i, j, width, height) - EVAPOFACTOR;
+
+			float tmp = board[j * width + i].val - EVAPOFACTOR;
+			if(tmp < 0)
 			{
-				board[j * width + i] = 0;
+				tmp = 0;
+			}
+			if(tmp != board[j * width + i].val)
+			{
+				board[j * width + i].val = tmp;
+				board[j * width + i].update = 0;
 			}
 		}
 	}
 }
 
-void drawBoard(float* b, int width, int height, cairo_t *cr)
+void drawBoard(square* b, int width, int height, cairo_t *cr)
 {
+	int pixel_drawn = 0;
 	for(int i = 0; i < width; i++)
 	{
 		for(int j = 0; j < height; j++)
 		{
-			if(b[j * width + i] != 0)
+			if(b[j * width + i].update == 0)
 			{
-				cairo_set_source_rgba(cr, 1, 1, 1,b[j * width + i]);
+				float v = b[j * width + i].val;
 				cairo_rectangle(cr, i, j, 1, 1);
+				cairo_set_source_rgb(cr, v, v, v);
 				cairo_fill(cr);
+				b[j * width + i].update = 1;
+				pixel_drawn += 1;
 			}
 		}
 	}
+	g_print("pixel_drawn = %d\n",pixel_drawn);
 }

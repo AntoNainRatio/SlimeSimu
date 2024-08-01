@@ -13,6 +13,8 @@ typedef struct UserInterface
 	GtkDrawingArea* area;
 	int width;
 	int height;
+	int firstDraw;
+	cairo_surface_t *surface;
 } UserInterface;
 
 typedef struct Simu
@@ -22,7 +24,7 @@ typedef struct Simu
 	UserInterface ui;
 	struct ship** ship;
 	int shipNumber;
-	float* board;
+	struct square* board;
 } Simu;
 
 struct ship** getDebugShipsList();

@@ -9,7 +9,19 @@
 
 static gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer user_data)
 {
-	redraw(user_data, cr);
+	Simu* simu = user_data;
+
+
+	//cairo_set_source_rgb(surface_cr, 0, 0, 0);
+	//cairo_paint(surface_cr);
+
+	cairo_t *surface_cr = cairo_create(simu->ui.surface);
+
+	redraw(user_data, surface_cr);
+
+
+	cairo_set_source_surface(cr, simu->ui.surface, 0, 0);
+	cairo_paint(cr);
 
 	return FALSE;
 }
@@ -19,6 +31,10 @@ gboolean on_move_ship(gpointer user_data)
 	Simu* simu = user_data;
 
 	updateSimu(simu);
+
+	/*cairo_t *surface_cr = cairo_create(simu->ui.surface);
+	redraw(user_data, surface_cr);
+	cairo_destroy(surface_cr);*/
 
 	gtk_widget_queue_draw(GTK_WIDGET(simu->ui.area));
 
@@ -31,6 +47,7 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 
 	if( event->keyval == GDK_KEY_space)
 	{
+		simu->ui.firstDraw = 1;
 		if ((simu->state) == PAUSE)
 		{
 			simu->state = PLAY;
@@ -71,7 +88,7 @@ int main (int argc, char *argv[])
 	gtk_window_set_default_size(window, width, height);
 	GtkDrawingArea* area = GTK_DRAWING_AREA(gtk_builder_get_object(builder,"drawing_area"));
 
-	float shipNumber = 360;
+	float shipNumber = 1;
 
 	Simu simu = getNewSimu(window, area, width, height, shipNumber);
 
@@ -82,7 +99,7 @@ int main (int argc, char *argv[])
 
 	g_object_unref(builder);
 
-	gtk_main ();
+	gtk_main();
 
 	freeSimu(simu);
 	return 0;
