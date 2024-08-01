@@ -5,7 +5,7 @@
 #include "simu.h"
 
 #define SHIP_PERIOD 3
-
+#define SHIPNUMBER 1
 
 static gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer user_data)
 {
@@ -88,7 +88,7 @@ int main (int argc, char *argv[])
 	gtk_window_set_default_size(window, width, height);
 	GtkDrawingArea* area = GTK_DRAWING_AREA(gtk_builder_get_object(builder,"drawing_area"));
 
-	float shipNumber = 1;
+	float shipNumber = SHIPNUMBER;
 
 	Simu simu = getNewSimu(window, area, width, height, shipNumber);
 

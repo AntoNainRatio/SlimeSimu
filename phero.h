@@ -5,6 +5,7 @@ typedef struct square
 {
 	float val;
 	int update;
+	int neighbor;
 } square;
 
 square* getNewBoard(int width, int height);

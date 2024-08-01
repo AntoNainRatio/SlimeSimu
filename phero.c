@@ -18,26 +18,12 @@ square* getNewBoard(int width, int height)
 			{
 				.val = 0,
 				.update = 0,
+				.neighbor = 0,
 			};
 			res[i * width +j] = tmp;
 		}
 	}
 	return res;
-}
-
-bool hasNotNullNeighbor(square* board, int x, int y, int width, int height)
-{
-	for(int i = -1; i < 2; i++)
-	{
-		for(int j = -1; j < 2; j++)
-		{
-			if(board[(y + j)*width + (x + i)].val != 0)
-			{
-				return true;
-			}
-		}
-	}
-	return false;
 }
 
 float getBlurValue(square* board, int x, int y, int width, int height)
@@ -70,12 +56,19 @@ void evapoBoard(square* board, int width, int height)
 			{
 				board[j * width + i] -= EVAPOFACTOR;
 			}*/
+			float tmp;
 			
-
-			//float tmp = getBlurValue(board, i, j, width, height) - EVAPOFACTOR;
-
-			float tmp = board[j * width + i].val - EVAPOFACTOR;
-			if(tmp < 0)
+			if(board[j * width +i].neighbor == 1)
+			{
+				tmp = (getBlurValue(board, i, j, width, height) + board[j * width + i ].val) / 2 - EVAPOFACTOR;
+			
+				//float tmp = board[j * width + i].val - EVAPOFACTOR;
+				if(tmp < 0)
+				{
+					tmp = 0;
+				}
+			}
+			else
 			{
 				tmp = 0;
 			}
