@@ -52,26 +52,26 @@ void evapoBoard(square* board, int width, int height)
 	{
 		for(int j = 0; j < height; j++)
 		{
-			/*if(brd[j * width + i] >= EVAPOFACTOR)
+			/*if(board[j * width + i] >= EVAPOFACTOR)
 			{
 				board[j * width + i] -= EVAPOFACTOR;
 			}*/
 			float tmp;
 			
-			if(board[j * width +i].neighbor == 1)
-			{
-				tmp = (getBlurValue(board, i, j, width, height) + board[j * width + i ].val) / 2 - EVAPOFACTOR;
+			//if(board[j * width +i].neighbor == 1)
+			//{
+				//tmp = (getBlurValue(board, i, j, width, height) + board[j * width + i ].val) / 2 - EVAPOFACTOR;
 			
-				//float tmp = board[j * width + i].val - EVAPOFACTOR;
+				tmp = board[j * width + i].val - EVAPOFACTOR;
 				if(tmp < 0)
 				{
 					tmp = 0;
 				}
-			}
+			/*}
 			else
 			{
 				tmp = 0;
-			}
+			}*/
 			if(tmp != board[j * width + i].val)
 			{
 				board[j * width + i].val = tmp;
@@ -90,7 +90,7 @@ void drawBoard(square* b, int width, int height, cairo_t *cr)
 		{
 			if(b[j * width + i].update == 0)
 			{
-				float v = b[j * width + i].val;
+				float v = 1 - b[j * width + i].val;
 				cairo_rectangle(cr, i, j, 1, 1);
 				cairo_set_source_rgb(cr, v, v, v);
 				cairo_fill(cr);

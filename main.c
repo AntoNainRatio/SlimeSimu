@@ -9,19 +9,16 @@
 
 static gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer user_data)
 {
-	Simu* simu = user_data;
-
-
 	//cairo_set_source_rgb(surface_cr, 0, 0, 0);
 	//cairo_paint(surface_cr);
 
-	cairo_t *surface_cr = cairo_create(simu->ui.surface);
+	//cairo_t *surface_cr = cairo_create(simu->ui.surface);
 
-	redraw(user_data, surface_cr);
+	redraw(user_data, cr);
 
 
-	cairo_set_source_surface(cr, simu->ui.surface, 0, 0);
-	cairo_paint(cr);
+	//cairo_set_source_surface(cr, simu->ui.surface, 0, 0);
+	//cairo_paint(cr);
 
 	return FALSE;
 }
@@ -47,7 +44,6 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 
 	if( event->keyval == GDK_KEY_space)
 	{
-		simu->ui.firstDraw = 1;
 		if ((simu->state) == PAUSE)
 		{
 			simu->state = PLAY;
@@ -59,9 +55,10 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 			g_source_remove(simu->event);
 			simu->event = 0;
 		}
-		return TRUE;
+		//return TRUE;
 	}
-	return FALSE;
+	//return FALSE;
+	return TRUE;
 }
 
 int main (int argc, char *argv[])

@@ -55,7 +55,7 @@ Simu getNewSimu(GtkWindow* window, GtkDrawingArea* area, int width, int height, 
 void placePheroOnBoard(struct square* board, struct ship* ship, int width, int height)
 {
 	board[(int)(round(ship->y) * width + round(ship->x))].val = 1.0;
-	for(int i = -1; i < 2; i++)
+	/*for(int i = -1; i < 2; i++)
 	{
 		for(int j = -1; j < 2; j++)
 		{
@@ -66,7 +66,7 @@ void placePheroOnBoard(struct square* board, struct ship* ship, int width, int h
 				board[newY * width + newX].neighbor = 1;
 			}
 		}
-	}
+	}*/
 }
 
 void updateSimu(Simu* simu)

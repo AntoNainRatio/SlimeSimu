@@ -6,8 +6,6 @@
 #include <stdbool.h>
 #include "ship.h"
 
-#define ERRORPERCENT 0.02
-
 struct ship* alloc_ship()
 {
 	struct ship* res = malloc(sizeof(struct ship));
