@@ -5,7 +5,7 @@
 #include "simu.h"
 
 #define SHIP_PERIOD 3
-#define SHIPNUMBER 1000
+#define SHIPNUMBER 6000
 
 static gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer user_data)
 {
