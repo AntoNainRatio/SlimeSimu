@@ -7,6 +7,9 @@
 #include "ship.h"
 #include "simu.h"
 
+#define DIFFUSION   0.4f
+#define EVAPOFACTOR 0.05f
+
 struct ship** getDebugShipsList()
 {
 	struct ship** res = malloc(360 * sizeof(struct ship*));
@@ -52,56 +55,42 @@ Simu getNewSimu(GtkWindow* window, GtkDrawingArea* area, int width, int height, 
 	return simu;
 }
 
-void placePheroOnBoard(struct square* board, struct ship* ship, int width, int height)
+void placePheroOnBoard(PheromoneGrid* grid, struct ship* ship)
 {
-	board[(int)(round(ship->y) * width + round(ship->x))].val = 1.0;
-	/*for(int i = -1; i < 2; i++)
-	{
-		for(int j = -1; j < 2; j++)
-		{
-			int newX = (int)(round(ship->x + j));
-			int newY = (int)(round(ship->y + i));
-			if(newX >= 0 && newX < width && newY >= 0 && newY < height)
-			{
-				board[newY * width + newX].neighbor = 1;
-			}
-		}
-	}*/
+    int x = (int)round(ship->x);
+    int y = (int)round(ship->y);
+
+    if(x < 0) x = 0;
+    if(x >= grid->width)  x = grid->width  - 1;
+    if(y < 0) y = 0;
+    if(y >= grid->height) y = grid->height - 1;
+
+    grid->current[y * grid->width + x] = 1.0f;
 }
 
 void updateSimu(Simu* simu)
 {
-	for(int i = 0; i < simu->shipNumber; i++)
-	{
-		updateShip(simu->ship[i], simu->ui.width, simu->ui.height);
-		placePheroOnBoard(simu->board, simu->ship[i], simu->ui.width, simu->ui.height);
-	}
-	evapoBoard(simu->board, simu->ui.width, simu->ui.height);
+    for(int i = 0; i < simu->shipNumber; i++)
+    {
+        updateShip(simu->ship[i], simu->board->current,
+                   simu->ui.width, simu->ui.height);
+        placePheroOnBoard(simu->board, simu->ship[i]);
+    }
+    evapoBoard(simu->board, DIFFUSION, EVAPOFACTOR);
 }
 
 void redraw(gpointer user_data, cairo_t *cr)
 {
-	Simu* simu = user_data;
-	//cairo_set_source_rgb(cr, 0, 0, 0);
-	//cairo_paint(cr);
-
-
-	/*cairo_set_source_rgb(cr, 1, 1, 1);
-	for(int i = 0; i < simu->shipNumber; i++)
-	{
-		cairo_rectangle(cr, round(simu->ship[i]->x), round(simu->ship[i]->y), COTE, COTE);
-	}
-	cairo_fill(cr);*/
-
-	drawBoard(simu->board, simu->ui.width, simu->ui.height, cr);
+    Simu* simu = user_data;
+    drawBoard(simu->board, simu->ui.surface);
+    cairo_set_source_surface(cr, simu->ui.surface, 0, 0);
+    cairo_paint(cr);
 }
 
 void freeSimu(Simu simu)
 {
-	for(int i = 0; i < simu.shipNumber; i++)
-	{
-		freeShip(simu.ship[i]);
-	}
-	cairo_surface_destroy(simu.ui.surface);
-	free(simu.board);
+    for(int i = 0; i < simu.shipNumber; i++)
+        freeShip(simu.ship[i]);
+    freeBoard(simu.board);
+    cairo_surface_destroy(simu.ui.surface);
 }

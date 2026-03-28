@@ -56,151 +56,6 @@ float absAngle(float angle)
 }
 
 
-/*void handleSides(struct ship* a, int width, int height)
-{
-	float ANGLETETA = absAngle(a->targetAngle - a->preAngle) * ERRORPERCENT;
-	if(a->x < TURNRANGE && a->y < TURNRANGE)
-	{
-		a->targetAngle = 315;
-		if(a->isInCorner == 0)
-		{
-			a->isInCorner = 1;
-			a->preAngle = a->angle;
-		}
-		ANGLETETA = absAngle(a->targetAngle - a->preAngle) * ERRORPERCENT;
-		if( a->angle <= a->targetAngle - ANGLETETA || a->angle >= a->targetAngle + ANGLETETA)
-		{
-			a->angle = a->angle + (a->targetAngle- a->preAngle) / 40;
-		}
-		else
-		{
-			a->targetAngle = a->angle;
-		}
-
-	}
-	else if(a->x < TURNRANGE && a->y > height - TURNRANGE)
-	{
-		a->targetAngle = 45;
-		if(a->isInCorner == 0)
-		{
-			a->isInCorner = 1;
-			a->preAngle = a->angle;
-		}
-		ANGLETETA = absAngle(a->targetAngle - a->preAngle) * ERRORPERCENT;
-		if( a->angle <= a->targetAngle - ANGLETETA || a->angle >= a->targetAngle + ANGLETETA)
-		{
-			a->angle = a->angle + (a->targetAngle- a->preAngle) / 40;
-		}
-		else
-		{
-			a->targetAngle = a->angle;
-		}
-
-	}
-	else if(a->x > width - TURNRANGE && a->y < TURNRANGE)
-	{
-		a->targetAngle = 225;
-		if(a->isInCorner == 0)
-		{
-			a->isInCorner = 1;
-			a->preAngle = a->angle;
-		}
-		ANGLETETA = absAngle(a->targetAngle - a->preAngle) * ERRORPERCENT;
-		if( a->angle <= a->targetAngle - ANGLETETA || a->angle >= a->targetAngle + ANGLETETA)
-		{
-			a->angle = a->angle + (a->targetAngle- a->preAngle) / 40;
-		}
-		else
-		{
-			a->targetAngle = a->angle;
-		}
-
-	}
-	else if(a->x > width - TURNRANGE && a->y > height - TURNRANGE)
-	{
-		a->targetAngle = 135;
-		if(a->isInCorner == 0)
-		{
-			a->isInCorner = 1;
-			a->preAngle = a->angle;
-		}
-		ANGLETETA = absAngle(a->targetAngle - a->preAngle) * ERRORPERCENT;
-		if( a->angle <= a->targetAngle - ANGLETETA || a->angle >= a->targetAngle + ANGLETETA)
-		{
-			a->angle = a->angle + (a->targetAngle- a->preAngle) / 40;
-		}
-		else
-		{
-			a->targetAngle = a->angle;
-		}
-	}
-	else if(a->x < TURNRANGE || a->x > width - TURNRANGE)
-	{
-		if(a->isInCorner == 0)
-		{
-			a->targetAngle = getInterAngle(a->preAngle + (90 - a->preAngle)*2);
-			ANGLETETA = absAngle(a->targetAngle - a->preAngle) * ERRORPERCENT;
-		}
-		if( a->angle <= a->targetAngle - ANGLETETA || a->angle >= a->targetAngle + ANGLETETA)
-		{
-			a->angle = a->angle + (a->targetAngle - a->preAngle) / 40;
-		}
-		else
-		{
-			a->targetAngle = a->angle;
-		}
-
-	}
-	else if(a->y < TURNRANGE || a->y > height - TURNRANGE)
-	{
-		if(a->isInCorner == 0)
-		{
-			a->targetAngle = getInterAngle(a->preAngle + (180 - a->preAngle)*2);
-			ANGLETETA = absAngle(a->targetAngle - a->preAngle) * ERRORPERCENT;
-		}
-		if( a->angle <= a->targetAngle - ANGLETETA || a->angle >= a->targetAngle + ANGLETETA)
-		{
-			if(absAngle(a->targetAngle - a->preAngle) > 180)
-			{
-				a->angle = getInterAngle(a->angle - (a->targetAngle - a->preAngle) / 40);
-			}
-			else
-			{
-				a->angle = getInterAngle(a->angle + (a->targetAngle - a->preAngle) / 40);
-			}
-		}
-		else
-		{
-			a->targetAngle = a->angle;
-		}
-	}
-	else
-	{
-		if( a->angle <= a->targetAngle - ANGLETETA || a->angle >= a->targetAngle + ANGLETETA)
-		{
-			a->angle = getInterAngle(a->angle + (a->targetAngle - a->preAngle) / 40);
-		}
-		else
-		{
-			a->targetAngle = a->angle;
-			if(a->preAngle != a->angle)
-			{
-				a->preAngle = a->angle;
-			}
-		}
-		if(a->isInCorner == 1)
-		{
-			a->isInCorner = 0;
-		}
-	}
-
-
-	g_print("=============================\n");
-	g_print("preAngle = %f\n",a->preAngle);
-	g_print("angle = %f\n",a->angle);
-	g_print("targetAngle = %f\n",a->targetAngle);
-}*/
-
 void handleSides(struct ship* a, int width, int height)
 {
 	if(round(a->x) <= 0 && (a->angle > 90 && a->angle < 270))
@@ -221,23 +76,75 @@ void handleSides(struct ship* a, int width, int height)
 	}
 }
 
-void updateShip(struct ship* a, int width, int height)
+// Somme les phéromones dans un cercle de rayon `radius` et de centre (cx, cy)
+float samplePheromones(float* board, int width, int height,
+                       float cx, float cy, int radius)
 {
-	float addx = (cos((double)(degreeToRadian(a->angle))))*SPEED;
-	a->x += addx;
+    float sum = 0.0f;
+    int x0 = (int)cx - radius;
+    int x1 = (int)cx + radius;
+    int y0 = (int)cy - radius;
+    int y1 = (int)cy + radius;
 
-	/*g_print("x = %d\n",a->x);
-	g_print("width = %d\n",width);
-	*/
+    for(int y = y0; y <= y1; y++)
+    {
+        for(int x = x0; x <= x1; x++)
+        {
+            if(x >= 0 && x < width && y >= 0 && y < height)
+                sum += board[y * width + x];
+        }
+    }
+    return sum;
+}
 
-	float addy = (sin((double)(degreeToRadian(a->angle))))*SPEED;
-	a->y += addy;
+void steerShip(struct ship* a, float* board, int width, int height)
+{
+    float rad      = a->angle * PI / 180.0f;
+    float rad_left = (a->angle + SENSOR_ANGLE) * PI / 180.0f;
+    float rad_right= (a->angle - SENSOR_ANGLE) * PI / 180.0f;
 
-	/*g_print("height = %d\n",height);
-	g_print("y = %d\n",a->y);
-	*/
+    // Position des 3 capteurs
+    float fx = a->x + cos(rad)       * SENSOR_DIST;
+    float fy = a->y + sin(rad)       * SENSOR_DIST;
+    float lx = a->x + cos(rad_left)  * SENSOR_DIST;
+    float ly = a->y + sin(rad_left)  * SENSOR_DIST;
+    float rx = a->x + cos(rad_right) * SENSOR_DIST;
+    float ry = a->y + sin(rad_right) * SENSOR_DIST;
 
-	handleSides(a,width, height);
+    float front = samplePheromones(board, width, height, fx, fy, SENSOR_RADIUS);
+    float left  = samplePheromones(board, width, height, lx, ly, SENSOR_RADIUS);
+    float right = samplePheromones(board, width, height, rx, ry, SENSOR_RADIUS);
+
+    if(front >= left && front >= right)
+    {
+        // Tout droit — pas de changement
+    }
+    else if(left > right)
+    {
+        a->angle = fmodf(a->angle + TURN_DELTA + 360.0f, 360.0f);
+    }
+    else if(right > left)
+    {
+        a->angle = fmodf(a->angle - TURN_DELTA + 360.0f, 360.0f);
+    }
+    else
+    {
+        // Égalité gauche/droite — petit bruit aléatoire pour éviter les blocages
+        float noise = (rand() % 2 == 0) ? TURN_DELTA : -TURN_DELTA;
+        a->angle = fmodf(a->angle + noise + 360.0f, 360.0f);
+    }
+}
+
+void updateShip(struct ship* a, float* board, int width, int height)
+{
+    steerShip(a, board, width, height);
+
+    float addx = cosf(a->angle * PI / 180.0f) * SPEED;
+    float addy = sinf(a->angle * PI / 180.0f) * SPEED;
+    a->x += addx;
+    a->y += addy;
+
+    handleSides(a, width, height);
 }
 
 void drawShip(struct ship* a, GtkAllocation allocation, cairo_t *cr)

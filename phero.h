@@ -1,15 +1,30 @@
 #ifndef PHERO_H
 #define PHERO_H
 
-typedef struct square
-{
-	float val;
-	int update;
-	int neighbor;
-} square;
+#include <pthread.h>
 
-square* getNewBoard(int width, int height);
-void evapoBoard(square* board, int width, int height);
-void drawBoard(square* board, int width, int height, cairo_t *cr);
+#define NB_THREADS 14
+
+typedef struct PheromoneGrid
+{
+    float* current;
+    float* next;
+    int width;
+    int height;
+} PheromoneGrid;
+
+typedef struct ThreadArgs
+{
+    PheromoneGrid* grid;
+    int y_start;
+    int y_end;
+    float diffusion;
+    float evaporation;
+} ThreadArgs;
+
+PheromoneGrid* getNewBoard(int width, int height);
+void evapoBoard(PheromoneGrid* grid, float diffusion, float evaporation);
+void drawBoard(PheromoneGrid* grid, cairo_surface_t* surface);
+void freeBoard(PheromoneGrid* grid);
 
 #endif

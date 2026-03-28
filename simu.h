@@ -24,7 +24,7 @@ typedef struct Simu
 	UserInterface ui;
 	struct ship** ship;
 	int shipNumber;
-	struct square* board;
+	PheromoneGrid* board;
 } Simu;
 
 struct ship** getDebugShipsList();
