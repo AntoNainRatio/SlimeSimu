@@ -5,7 +5,10 @@
 #include "simu.h"
 
 #define SHIP_PERIOD 3
-#define SHIPNUMBER 6000
+#define SHIPNUMBER 300
+
+#define WIDTH 1800
+#define HEIGHT 900
 
 static gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer user_data)
 {
@@ -79,8 +82,8 @@ int main (int argc, char *argv[])
 
 	GtkWindow* window = GTK_WINDOW(gtk_builder_get_object(builder,"window"));
 
-	int width = 900;
-	int height = 900;
+	int width = WIDTH;
+	int height = HEIGHT;
 
 	gtk_window_set_default_size(window, width, height);
 	GtkDrawingArea* area = GTK_DRAWING_AREA(gtk_builder_get_object(builder,"drawing_area"));

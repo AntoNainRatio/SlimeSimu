@@ -2,13 +2,14 @@
 #define HEADER_FILE_NAME
 
 #define COTE         1
-#define SPEED        2
+#define SPEED        1
 #define PI           3.1415927f
 
-#define SENSOR_DIST   15.0f
-#define SENSOR_ANGLE  20.0f
-#define SENSOR_RADIUS 2
-#define TURN_DELTA    4.0f
+#define SENSOR_DIST   30.0f
+#define SENSOR_ANGLE  45.0f
+#define SENSOR_RADIUS 6
+#define TURN_DELTA_MIN  1.0f
+#define TURN_DELTA_MAX  8.0f
 
 struct ship {
     float x;

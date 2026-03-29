@@ -7,8 +7,8 @@
 #include "ship.h"
 #include "simu.h"
 
-#define DIFFUSION   0.4f
-#define EVAPOFACTOR 0.05f
+#define DIFFUSION   0.2f
+#define EVAPOFACTOR 0.005f
 
 struct ship** getDebugShipsList()
 {
