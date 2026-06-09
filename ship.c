@@ -1,16 +1,115 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <gtk/gtk.h>
-#include <cairo.h>
-#include <stdbool.h>
+#include <epoxy/gl.h>
 #include "ship.h"
 
-struct ship* alloc_ship()
-{
-	struct ship* res = malloc(sizeof(struct ship));
-	return res;
-}
+// ─── Ship compute shader ──────────────────────────────────────────────────────
+// One invocation per ship. Reads pheromone texture for sensing, steers and
+// moves the ship, then deposits 1.0 at its new position.
+// The same texture (binding 1) is used for both read (sensing) and write
+// (deposit). Reading without coherent means invocations see last frame's
+// state, which is exactly what we want.
+
+static const char* CS_SHIPS_SRC =
+    "#version 430 core\n"
+    "layout(local_size_x = 64) in;\n"
+    "\n"
+    "struct Ship { float x; float y; float angle; };\n"
+    "layout(std430, binding = 0) buffer ShipBuf { Ship ships[]; };\n"
+    "layout(r32f,   binding = 1) uniform image2D phero;\n"
+    "\n"
+    "uniform int  u_width;\n"
+    "uniform int  u_height;\n"
+    "uniform int  u_count;\n"
+    "uniform uint u_seed;\n"
+    "\n"
+    "const float SPEED        = 1.0;\n"
+    "const float SENSOR_DIST  = 15.0;\n"
+    "const float SENSOR_ANGLE = 25.0;\n"
+    "const int   SENSOR_R     = 2;\n"
+    "const float TURN_MIN     = 2.0;\n"
+    "const float TURN_MAX     = 8.0;\n"
+    "const float PI           = 3.14159265;\n"
+    "\n"
+    "uint uhash(uint x) {\n"
+    "    x ^= x >> 16u; x *= 0x45d9f3bu;\n"
+    "    x ^= x >> 16u; x *= 0x45d9f3bu;\n"
+    "    x ^= x >> 16u; return x;\n"
+    "}\n"
+    "float frand(uint s) { return float(uhash(s)) * (1.0 / 4294967295.0); }\n"
+    "\n"
+    "float samplePhero(vec2 c) {\n"
+    "    float s = 0.0;\n"
+    "    for (int dy = -SENSOR_R; dy <= SENSOR_R; dy++)\n"
+    "    for (int dx = -SENSOR_R; dx <= SENSOR_R; dx++) {\n"
+    "        ivec2 p = ivec2(int(c.x)+dx, int(c.y)+dy);\n"
+    "        if (p.x >= 0 && p.x < u_width && p.y >= 0 && p.y < u_height)\n"
+    "            s += imageLoad(phero, p).r;\n"
+    "    }\n"
+    "    return s;\n"
+    "}\n"
+    "\n"
+    "float applyTurn(float cur, float delta) {\n"
+    "    float d = clamp(delta, -90.0, 90.0);\n"
+    "    return mod(cur + d + 360.0, 360.0);\n"
+    "}\n"
+    "\n"
+    "void main() {\n"
+    "    uint id = gl_GlobalInvocationID.x;\n"
+    "    if (int(id) >= u_count) return;\n"
+    "\n"
+    "    Ship s = ships[id];\n"
+    "    float rad   = s.angle * PI / 180.0;\n"
+    "    float rad_l = (s.angle + SENSOR_ANGLE) * PI / 180.0;\n"
+    "    float rad_r = (s.angle - SENSOR_ANGLE) * PI / 180.0;\n"
+    "\n"
+    "    vec2 fwd = vec2(s.x + cos(rad)   * SENSOR_DIST, s.y + sin(rad)   * SENSOR_DIST);\n"
+    "    vec2 lft = vec2(s.x + cos(rad_l) * SENSOR_DIST, s.y + sin(rad_l) * SENSOR_DIST);\n"
+    "    vec2 rgt = vec2(s.x + cos(rad_r) * SENSOR_DIST, s.y + sin(rad_r) * SENSOR_DIST);\n"
+    "\n"
+    "    float f = samplePhero(fwd);\n"
+    "    float l = samplePhero(lft);\n"
+    "    float r = samplePhero(rgt);\n"
+    "\n"
+    "    uint  seed  = uhash(id ^ u_seed);\n"
+    "    float delta = TURN_MIN + frand(seed) * (TURN_MAX - TURN_MIN);\n"
+    "    float noise = (frand(uhash(seed + 1u)) * 2.0 - 1.0) * TURN_MIN;\n"
+    "\n"
+    "    if      (f >= l && f >= r)  {  /* keep going */                    }\n"
+    "    else if (l > f  && r > f)   { s.angle = applyTurn(s.angle,  noise); }\n"
+    "    else if (l > r)             { s.angle = applyTurn(s.angle,  delta); }\n"
+    "    else                        { s.angle = applyTurn(s.angle, -delta); }\n"
+    "\n"
+    "    float move_rad = s.angle * PI / 180.0;\n"
+    "    s.x += cos(move_rad) * SPEED;\n"
+    "    s.y += sin(move_rad) * SPEED;\n"
+    "\n"
+    "    // Borders: bounce with randomised angle\n"
+    "    if (s.x <= 0.0) {\n"
+    "        s.x = 1.0;\n"
+    "        s.angle = mod(frand(uhash(seed+2u))*160.0 - 80.0 + 360.0, 360.0);\n"
+    "    } else if (s.x + 1.0 >= float(u_width)) {\n"
+    "        s.x = float(u_width) - 2.0;\n"
+    "        s.angle = mod(180.0 + frand(uhash(seed+3u))*160.0 - 80.0 + 360.0, 360.0);\n"
+    "    }\n"
+    "    if (s.y <= 0.0) {\n"
+    "        s.y = 1.0;\n"
+    "        s.angle = mod(90.0 + frand(uhash(seed+4u))*160.0 - 80.0 + 360.0, 360.0);\n"
+    "    } else if (s.y + 1.0 >= float(u_height)) {\n"
+    "        s.y = float(u_height) - 2.0;\n"
+    "        s.angle = mod(270.0 + frand(uhash(seed+5u))*160.0 - 80.0 + 360.0, 360.0);\n"
+    "    }\n"
+    "\n"
+    "    ships[id] = s;\n"
+    "\n"
+    "    // Deposit pheromone at new position\n"
+    "    ivec2 px = clamp(ivec2(int(round(s.x)), int(round(s.y))),\n"
+    "                     ivec2(0), ivec2(u_width-1, u_height-1));\n"
+    "    imageStore(phero, px, vec4(1.0, 0.0, 0.0, 0.0));\n"
+    "}\n";
+
+// ─── CPU init helpers ─────────────────────────────────────────────────────────
 
 float getNewRandomAngle(float mini, float maxi)
 {
@@ -20,191 +119,69 @@ float getNewRandomAngle(float mini, float maxi)
 
 int getRandomPosition(int mini, int maxi)
 {
-	return (rand()%(maxi-mini))+mini;
+    return (rand() % (maxi - mini)) + mini;
 }
 
 struct ship* getNewShip(float x, float y, float angleDeg)
 {
-	struct ship* res = alloc_ship();
-	res->x = x;
-	res->y = y;
-	if( angleDeg < 0 || angleDeg > 360)
-	{
-		printf("Error initializing ship: Angle(degree) not between 0 and 359(inlcuded)");
-	}
-	res->angle = angleDeg;
-	return res;
+    struct ship* res = malloc(sizeof(struct ship));
+    res->x     = x;
+    res->y     = y;
+    res->angle = angleDeg;
+    return res;
 }
-
-float degreeToRadian(int d)
-{
-	return d*PI/180;
-}
-
-float getInterAngle(float angle)
-{
-	return (int)(angle + 360) % 360;
-}
-
-float absAngle(float angle)
-{
-	if(angle < 0)
-	{
-		return -angle;
-	}
-	return angle;
-}
-
-
-void handleSides(struct ship* a, int width, int height)
-{
-    // Bord gauche → forcer vers la droite : angle dans [-90, +90]
-    if(round(a->x) <= 0)
-    {
-        a->x = 1;
-        float delta = getNewRandomAngle(-80.0f, 80.0f);
-        a->angle = fmodf(delta + 360.0f, 360.0f);
-    }
-    // Bord droit → forcer vers la gauche : angle dans [100, 260]
-    else if(round(a->x) + COTE >= width)
-    {
-        a->x = width - COTE - 1;
-        float delta = getNewRandomAngle(-80.0f, 80.0f);
-        a->angle = fmodf(180.0f + delta + 360.0f, 360.0f);
-    }
-
-    // Bord haut → forcer vers le bas : angle dans [10, 170]
-    if(round(a->y) <= 0)
-    {
-        a->y = 1;
-        float delta = getNewRandomAngle(-80.0f, 80.0f);
-        a->angle = fmodf(90.0f + delta + 360.0f, 360.0f);
-    }
-    // Bord bas → forcer vers le haut : angle dans [190, 350]
-    else if(round(a->y) + COTE >= height)
-    {
-        a->y = height - COTE - 1;
-        float delta = getNewRandomAngle(-80.0f, 80.0f);
-        a->angle = fmodf(270.0f + delta + 360.0f, 360.0f);
-    }
-}
-
-// Somme les phéromones dans un cercle de rayon `radius` et de centre (cx, cy)
-float samplePheromones(float* board, int width, int height,
-                       float cx, float cy, int radius)
-{
-    float sum = 0.0f;
-    int x0 = (int)cx - radius;
-    int x1 = (int)cx + radius;
-    int y0 = (int)cy - radius;
-    int y1 = (int)cy + radius;
-
-    for(int y = y0; y <= y1; y++)
-    {
-        for(int x = x0; x <= x1; x++)
-        {
-            if(x >= 0 && x < width && y >= 0 && y < height)
-                sum += board[y * width + x];
-        }
-    }
-    return sum;
-}
-
-// variation aleatoir entre delta_min et delta_max
-static float randomTurnDelta()
-{
-    float range = TURN_DELTA_MAX - TURN_DELTA_MIN;
-    return TURN_DELTA_MIN + ((float)rand() / (float)RAND_MAX) * range;
-}
-
-// Applique une rotation en s'assurant que le nouvel angle
-// ne s'écarte pas de plus de 90° de la direction actuelle
-static float applyTurn(float current_angle, float delta)
-{
-    float new_angle = fmodf(current_angle + delta + 360.0f, 360.0f);
-
-    // Calcule la différence angulaire entre new_angle et current_angle
-    float diff = new_angle - current_angle;
-    if(diff > 180.0f)  diff -= 360.0f;
-    if(diff < -180.0f) diff += 360.0f;
-
-    // Interdit un écart de plus de 90°
-    if(diff > 90.0f)
-        new_angle = fmodf(current_angle + 90.0f + 360.0f, 360.0f);
-    else if(diff < -90.0f)
-        new_angle = fmodf(current_angle - 90.0f + 360.0f, 360.0f);
-
-    return new_angle;
-}
-
-void steerShip(struct ship* a, float* board, int width, int height)
-{
-    float rad       = a->angle * PI / 180.0f;
-    float rad_left  = (a->angle + SENSOR_ANGLE) * PI / 180.0f;
-    float rad_right = (a->angle - SENSOR_ANGLE) * PI / 180.0f;
-
-    float fx = a->x + cosf(rad)       * SENSOR_DIST;
-    float fy = a->y + sinf(rad)       * SENSOR_DIST;
-    float lx = a->x + cosf(rad_left)  * SENSOR_DIST;
-    float ly = a->y + sinf(rad_left)  * SENSOR_DIST;
-    float rx = a->x + cosf(rad_right) * SENSOR_DIST;
-    float ry = a->y + sinf(rad_right) * SENSOR_DIST;
-
-    float front = samplePheromones(board, width, height, fx, fy, SENSOR_RADIUS);
-    float left  = samplePheromones(board, width, height, lx, ly, SENSOR_RADIUS);
-    float right = samplePheromones(board, width, height, rx, ry, SENSOR_RADIUS);
-
-    float delta = randomTurnDelta();
-
-    if(front >= left && front >= right)
-    {
-        float noise = (((float)rand() / (float)RAND_MAX) * 2.0f - 1.0f) * TURN_DELTA_MIN;
-        a->angle = applyTurn(a->angle, noise);
-    }
-    else if(left > right)
-    {
-        a->angle = applyTurn(a->angle, delta);
-    }
-    else if(right > left)
-    {
-        a->angle = applyTurn(a->angle, -delta);
-    }
-    else
-    {
-        float sign = (rand() % 2 == 0) ? 1.0f : -1.0f;
-        a->angle = applyTurn(a->angle, sign * delta);
-    }
-}
-
-void updateShip(struct ship* a, float* board, int width, int height)
-{
-    steerShip(a, board, width, height);
-
-    float addx = cosf(a->angle * PI / 180.0f) * SPEED;
-    float addy = sinf(a->angle * PI / 180.0f) * SPEED;
-    a->x += addx;
-    a->y += addy;
-
-    handleSides(a, width, height);
-}
-
-void drawShip(struct ship* a, GtkAllocation allocation, cairo_t *cr)
-{
-	cairo_set_source_rgb(cr, 1, 1, 1);
-	cairo_rectangle(cr, round(a->x), round(a->y), COTE, COTE);
-	cairo_fill(cr);
-}
-
-/*void redrawShip(struct ship* a, GtkAllocation allocation, cairo_t *cr)
-{
-	cairo_set_source_rgb(cr, 0, 0, 0);
-	cairo_arc(cr, a->preX, a->preY, RAYON, 0, 2 * G_PI);
-	cairo_fill(cr);
-	drawShip(a, allocation, cr);
-}*/
 
 void freeShip(struct ship* a)
 {
-	free(a);
+    free(a);
 }
 
+// ─── GPU resources ────────────────────────────────────────────────────────────
+
+GLuint createShipSSBO(struct ship** ships, int n)
+{
+    ShipSSBO* data = malloc(n * sizeof(ShipSSBO));
+    for(int i = 0; i < n; i++)
+    {
+        data[i].x     = ships[i]->x;
+        data[i].y     = ships[i]->y;
+        data[i].angle = ships[i]->angle;
+    }
+
+    GLuint ssbo;
+    glGenBuffers(1, &ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, n * sizeof(ShipSSBO), data, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    free(data);
+    return ssbo;
+}
+
+GLuint createShipCS()
+{
+    GLuint cs = glCreateShader(GL_COMPUTE_SHADER);
+    glShaderSource(cs, 1, &CS_SHIPS_SRC, NULL);
+    glCompileShader(cs);
+
+    GLint ok;
+    glGetShaderiv(cs, GL_COMPILE_STATUS, &ok);
+    if(!ok)
+    {
+        char log[512];
+        glGetShaderInfoLog(cs, 512, NULL, log);
+        g_printerr("Ship CS error: %s\n", log);
+    }
+
+    GLuint prog = glCreateProgram();
+    glAttachShader(prog, cs);
+    glLinkProgram(prog);
+    glGetProgramiv(prog, GL_LINK_STATUS, &ok);
+    if(!ok)
+    {
+        char log[512];
+        glGetProgramInfoLog(prog, 512, NULL, log);
+        g_printerr("Ship CS link error: %s\n", log);
+    }
+    glDeleteShader(cs);
+    return prog;
+}

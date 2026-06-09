@@ -1,109 +1,110 @@
 #include <gtk/gtk.h>
-#include <cairo.h>
+#include <epoxy/gl.h>
+#include <stdlib.h>
+#include <string.h>
 #include "phero.h"
 #include "ship.h"
 #include "simu.h"
 
-#define SHIP_PERIOD 3
-#define SHIPNUMBER 300
+#define SHIP_PERIOD      3
+#define SHIPNUMBER_DEFAULT 15000
 
-#define WIDTH 1800
-#define HEIGHT 900
-
-static gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer user_data)
+// Appelé quand le contexte GL est prêt
+static void on_realize(GtkGLArea* area, gpointer user_data)
 {
-	//cairo_set_source_rgb(surface_cr, 0, 0, 0);
-	//cairo_paint(surface_cr);
+    gtk_gl_area_make_current(area);
+    if(gtk_gl_area_get_error(area) != NULL)
+    {
+        g_printerr("Erreur GL lors du realize\n");
+        return;
+    }
+    initGL((Simu*)user_data);
+}
 
-	//cairo_t *surface_cr = cairo_create(simu->ui.surface);
-
-	redraw(user_data, cr);
-
-
-	//cairo_set_source_surface(cr, simu->ui.surface, 0, 0);
-	//cairo_paint(cr);
-
-	return FALSE;
+// Appelé à chaque frame
+static gboolean on_draw(GtkGLArea* area, GdkGLContext* context,
+                        gpointer user_data)
+{
+    redraw(user_data);
+    return TRUE;
 }
 
 gboolean on_move_ship(gpointer user_data)
 {
-	Simu* simu = user_data;
-
-	updateSimu(simu);
-
-	/*cairo_t *surface_cr = cairo_create(simu->ui.surface);
-	redraw(user_data, surface_cr);
-	cairo_destroy(surface_cr);*/
-
-	gtk_widget_queue_draw(GTK_WIDGET(simu->ui.area));
-
-	return TRUE;
+    Simu* simu = user_data;
+    updateSimu(simu);
+    gtk_widget_queue_draw(GTK_WIDGET(simu->ui.area));
+    return TRUE;
 }
 
-gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
+gboolean on_key_press(GtkWidget* widget, GdkEventKey* event,
+                      gpointer user_data)
 {
-	Simu* simu = user_data;
-
-	if( event->keyval == GDK_KEY_space)
-	{
-		if ((simu->state) == PAUSE)
-		{
-			simu->state = PLAY;
-			simu->event = g_timeout_add(SHIP_PERIOD, on_move_ship, simu);
-		}
-		else
-		{
-			simu->state = PAUSE;
-			g_source_remove(simu->event);
-			simu->event = 0;
-		}
-		//return TRUE;
-	}
-	//return FALSE;
-	return TRUE;
+    Simu* simu = user_data;
+    if(event->keyval == GDK_KEY_space)
+    {
+        if(simu->state == PAUSE)
+        {
+            simu->state = PLAY;
+            simu->event = g_timeout_add(SHIP_PERIOD, on_move_ship, simu);
+        }
+        else
+        {
+            simu->state = PAUSE;
+            g_source_remove(simu->event);
+            simu->event = 0;
+        }
+    }
+    return TRUE;
 }
 
-int main (int argc, char *argv[])
+int main(int argc, char* argv[])
 {
-	gtk_init (&argc, &argv);
+    int ship_number = SHIPNUMBER_DEFAULT;
+    for(int i = 1; i < argc; i++)
+    {
+        if((strcmp(argv[i], "-n") == 0 || strcmp(argv[i], "--ships") == 0) && i + 1 < argc)
+        {
+            ship_number = atoi(argv[++i]);
+            if(ship_number <= 0)
+            {
+                g_printerr("Nombre de fourmis invalide: %s\n", argv[i]);
+                return 1;
+            }
+        }
+    }
 
-	srand(time(NULL));
+    gtk_init(&argc, &argv);
+    srand(time(NULL));
 
-	GtkBuilder* builder = gtk_builder_new();
-	GError* error = NULL;
-	if(gtk_builder_add_from_file(builder, "template.glade", &error) == 0)
-	{
-		g_printerr("Error loading file: %s\n", error->message);
-		g_clear_error(&error);
-		g_object_unref(builder);
-		return 1;
-	}
+    GtkBuilder* builder = gtk_builder_new();
+    GError*     error   = NULL;
+    if(gtk_builder_add_from_file(builder, "template.glade", &error) == 0)
+    {
+        g_printerr("Error loading file: %s\n", error->message);
+        g_clear_error(&error);
+        g_object_unref(builder);
+        return 1;
+    }
 
-	GtkWindow* window = GTK_WINDOW(gtk_builder_get_object(builder,"window"));
+    GtkWindow*  window = GTK_WINDOW(gtk_builder_get_object(builder, "window"));
+    GtkGLArea*  area   = GTK_GL_AREA(gtk_builder_get_object(builder, "drawing_area"));
 
-	int width = WIDTH;
-	int height = HEIGHT;
+    int width  = 1800;
+    int height = 900;
+    gtk_window_set_default_size(window, width, height);
 
-	gtk_window_set_default_size(window, width, height);
-	GtkDrawingArea* area = GTK_DRAWING_AREA(gtk_builder_get_object(builder,"drawing_area"));
+    Simu simu = getNewSimu(window, area, width, height, ship_number);
 
-	float shipNumber = SHIPNUMBER;
-	if (argc == 2){
-		shipNumber = atoi(argv[1]);
-	}
+    g_signal_connect(area,   "realize",       G_CALLBACK(on_realize),  &simu);
+    g_signal_connect(area,   "render",        G_CALLBACK(on_draw),     &simu);
+    g_signal_connect(window, "destroy",       G_CALLBACK(gtk_main_quit), NULL);
+    g_signal_connect(window, "key_press_event", G_CALLBACK(on_key_press), &simu);
 
-	Simu simu = getNewSimu(window, area, width, height, shipNumber);
+    gtk_widget_show_all(GTK_WIDGET(window));
+    g_object_unref(builder);
+    gtk_main();
 
-	g_signal_connect(area, "draw", G_CALLBACK(on_draw), &simu);
-	g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
-	g_signal_connect(window, "key_press_event", G_CALLBACK(on_key_press), &simu);
-	gtk_widget_show_all(GTK_WIDGET(window));
-
-	g_object_unref(builder);
-
-	gtk_main();
-
-	freeSimu(simu);
-	return 0;
+    freeSimu(simu);
+    return 0;
 }

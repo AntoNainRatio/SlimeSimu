@@ -1,30 +1,23 @@
 #ifndef PHERO_H
 #define PHERO_H
 
-#include <pthread.h>
-
-#define NB_THREADS 14
+#include <epoxy/gl.h>
 
 typedef struct PheromoneGrid
 {
-    float* current;
-    float* next;
-    int width;
-    int height;
+    int    width, height;
+    GLuint tex[2];        // ping-pong textures (GL_R32F)
+    int    ping;          // index of the current (most recent) texture
+    GLuint cs_diffusion;
 } PheromoneGrid;
 
-typedef struct ThreadArgs
-{
-    PheromoneGrid* grid;
-    int y_start;
-    int y_end;
-    float diffusion;
-    float evaporation;
-} ThreadArgs;
-
 PheromoneGrid* getNewBoard(int width, int height);
-void evapoBoard(PheromoneGrid* grid, float diffusion, float evaporation);
-void drawBoard(PheromoneGrid* grid, cairo_surface_t* surface);
-void freeBoard(PheromoneGrid* grid);
+void           initBoardGL(PheromoneGrid* grid);
+void           evapoBoard(PheromoneGrid* grid, float diffusion, float evaporation);
+void           freeBoard(PheromoneGrid* grid);
+
+// Render pipeline
+GLuint createRenderProgram();
+void   drawBoard(GLuint program, GLuint vao, GLuint texture, int width, int height);
 
 #endif

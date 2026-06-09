@@ -1,37 +1,46 @@
 #ifndef SIMU_H
 #define SIMU_H
 
+#include <epoxy/gl.h>
+#include "phero.h"
+#include "ship.h"
+
 typedef enum State
 {
-	PLAY,
-	PAUSE,
+    PLAY,
+    PAUSE,
 } State;
 
 typedef struct UserInterface
 {
-	GtkWindow* window;
-	GtkDrawingArea* area;
-	int width;
-	int height;
-	int firstDraw;
-	cairo_surface_t *surface;
+    GtkWindow*  window;
+    GtkGLArea*  area;
+    int         width;
+    int         height;
+    GLuint      gl_program;  // render program (fullscreen quad)
+    GLuint      gl_vao;
 } UserInterface;
 
 typedef struct Simu
 {
-	State state;
-	guint event;
-	UserInterface ui;
-	struct ship** ship;
-	int shipNumber;
-	PheromoneGrid* board;
+    State          state;
+    guint          event;
+    UserInterface  ui;
+    // CPU-side ship list (populated at startup, freed after GPU upload in initGL)
+    struct ship**  ship;
+    int            shipNumber;
+    // GPU resources
+    GLuint         ship_ssbo;
+    GLuint         cs_ships;
+    PheromoneGrid* board;
 } Simu;
 
-struct ship** getDebugShipsList();
 struct ship** getShipsList(int n, int width, int height);
-Simu getNewSimu(GtkWindow* window, GtkDrawingArea* area, int width, int height, int shipNumber);
+Simu getNewSimu(GtkWindow* window, GtkGLArea* area,
+                int width, int height, int shipNumber);
+void initGL(Simu* simu);
 void updateSimu(Simu* simu);
-void redraw(gpointer user_data, cairo_t *cr);
+void redraw(gpointer user_data);
 void freeSimu(Simu simu);
 
 #endif

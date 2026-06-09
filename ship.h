@@ -1,14 +1,16 @@
-#ifndef HEADER_FILE_NAME
-#define HEADER_FILE_NAME
+#ifndef SHIP_H
+#define SHIP_H
+
+#include <epoxy/gl.h>
 
 #define COTE         1
 #define SPEED        1
 #define PI           3.1415927f
 
-#define SENSOR_DIST   30.0f
-#define SENSOR_ANGLE  45.0f
-#define SENSOR_RADIUS 6
-#define TURN_DELTA_MIN  1.0f
+#define SENSOR_DIST   15.0f
+#define SENSOR_ANGLE  25.0f
+#define SENSOR_RADIUS 2
+#define TURN_DELTA_MIN  2.0f
 #define TURN_DELTA_MAX  8.0f
 
 struct ship {
@@ -17,16 +19,16 @@ struct ship {
     float angle;
 };
 
-struct ship* alloc_ship();
+// Layout must match the GLSL struct Ship in the compute shader (std430, 12 bytes)
+typedef struct { float x, y, angle; } ShipSSBO;
+
+struct ship* getNewShip(float x, float y, float angleDeg);
 float        getNewRandomAngle(float mini, float maxi);
 int          getRandomPosition(int mini, int maxi);
-struct ship* getNewShip(float x, float y, float angleDeg);
-void         handleSides(struct ship* a, int width, int height);
-float        samplePheromones(float* board, int width, int height,
-                              float cx, float cy, int radius);
-void         steerShip(struct ship* a, float* board, int width, int height);
-void         updateShip(struct ship* a, float* board, int width, int height);
-void         drawShip(struct ship* a, GtkAllocation allocation, cairo_t *cr);
 void         freeShip(struct ship* a);
+
+// GPU resources
+GLuint createShipSSBO(struct ship** ships, int n);
+GLuint createShipCS();
 
 #endif
