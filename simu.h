@@ -32,7 +32,13 @@ typedef struct Simu
     // GPU resources
     GLuint         ship_ssbo;
     GLuint         cs_ships;
+    GLuint         cs_mouse;
     PheromoneGrid* board;
+    // Mouse interaction
+    int            mouse_x;
+    int            mouse_y;
+    int            mouse_mode; // 0=none, 1=attract (left held)
+    int            stunned;    // toggle: ants pick random direction each frame
 } Simu;
 
 struct ship** getShipsList(int n, int width, int height);
