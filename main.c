@@ -1,5 +1,6 @@
 #include <gtk/gtk.h>
 #include <epoxy/gl.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "phero.h"
@@ -99,19 +100,58 @@ gboolean on_key_press(GtkWidget* widget, GdkEventKey* event,
     return TRUE;
 }
 
+static void print_help(const char* prog)
+{
+    printf(
+        "Usage: %s [OPTIONS]\n"
+        "\n"
+        "GPU-accelerated Physarum slime-mold simulation.\n"
+        "\n"
+        "Options:\n"
+        "  -n, --ships <N>   Number of agents  (default: %d)\n"
+        "  -h, --help        Show this help and exit\n"
+        "\n"
+        "Controls:\n"
+        "  Space             Play / pause the simulation\n"
+        "  Left click (hold) Deposit pheromones under the cursor\n"
+        "  Right click       Toggle stunned mode\n"
+        "                    (agents ignore pheromones and turn randomly)\n"
+        "\n"
+        "Examples:\n"
+        "  %s                       # run with %d agents\n"
+        "  %s -n 5000               # run with 5 000 agents\n"
+        "  %s --ships 50000         # run with 50 000 agents\n",
+        prog,
+        SHIPNUMBER_DEFAULT,
+        prog, SHIPNUMBER_DEFAULT,
+        prog,
+        prog
+    );
+}
+
 int main(int argc, char* argv[])
 {
     int ship_number = SHIPNUMBER_DEFAULT;
     for(int i = 1; i < argc; i++)
     {
-        if((strcmp(argv[i], "-n") == 0 || strcmp(argv[i], "--ships") == 0) && i + 1 < argc)
+        if(strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0)
+        {
+            print_help(argv[0]);
+            return 0;
+        }
+        else if((strcmp(argv[i], "-n") == 0 || strcmp(argv[i], "--ships") == 0) && i + 1 < argc)
         {
             ship_number = atoi(argv[++i]);
             if(ship_number <= 0)
             {
-                g_printerr("Nombre de fourmis invalide: %s\n", argv[i]);
+                g_printerr("Invalid agent count: %s\n", argv[i]);
                 return 1;
             }
+        }
+        else
+        {
+            g_printerr("Unknown option: %s\n  Try: %s --help\n", argv[i], argv[0]);
+            return 1;
         }
     }
 
