@@ -1,7 +1,7 @@
-#include <stdio.h>
+#include <gtk/gtk.h>
+#include <epoxy/gl.h>
 #include <stdlib.h>
 #include <math.h>
-#include <epoxy/gl.h>
 #include "ship.h"
 
 // ─── Ship compute shader ──────────────────────────────────────────────────────
@@ -23,6 +23,7 @@ static const char* CS_SHIPS_SRC =
     "uniform int  u_height;\n"
     "uniform int  u_count;\n"
     "uniform uint u_seed;\n"
+    "uniform int  u_stunned;\n"
     "\n"
     "const float SPEED        = 1.0;\n"
     "const float SENSOR_DIST  = 15.0;\n"
@@ -76,10 +77,19 @@ static const char* CS_SHIPS_SRC =
     "    float delta = TURN_MIN + frand(seed) * (TURN_MAX - TURN_MIN);\n"
     "    float noise = (frand(uhash(seed + 1u)) * 2.0 - 1.0) * TURN_MIN;\n"
     "\n"
-    "    if      (f >= l && f >= r)  {  /* keep going */                    }\n"
-    "    else if (l > f  && r > f)   { s.angle = applyTurn(s.angle,  noise); }\n"
-    "    else if (l > r)             { s.angle = applyTurn(s.angle,  delta); }\n"
-    "    else                        { s.angle = applyTurn(s.angle, -delta); }\n"
+    "    if (f >= l && f >= r) { /* keep going */ }\n"
+    "    else if (u_stunned == 1) {\n"
+    "        float r_turn = (frand(uhash(id ^ u_seed ^ 7u)) * 2.0 - 1.0) * SENSOR_ANGLE;\n"
+    "        s.angle = applyTurn(s.angle, r_turn);\n"
+    "    } else if (l > f && r > f) {\n"
+    "        float p_left = l / (l + r);\n"
+    "        if (frand(uhash(seed + 3u)) < p_left)\n"
+    "            s.angle = applyTurn(s.angle,  delta);\n"
+    "        else\n"
+    "            s.angle = applyTurn(s.angle, -delta);\n"
+    "    } else if (l > r)           { s.angle = applyTurn(s.angle,  delta); }\n"
+    "    else if (r > l)            { s.angle = applyTurn(s.angle, -delta); }\n"
+    "    else                       { s.angle = applyTurn(s.angle, (frand(uhash(seed+5u)) < 0.5) ? delta : -delta); }\n"
     "\n"
     "    float move_rad = s.angle * PI / 180.0;\n"
     "    s.x += cos(move_rad) * SPEED;\n"

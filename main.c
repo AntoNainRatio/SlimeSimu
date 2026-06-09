@@ -6,7 +6,7 @@
 #include "ship.h"
 #include "simu.h"
 
-#define SHIP_PERIOD      3
+#define SHIP_PERIOD      6
 #define SHIPNUMBER_DEFAULT 15000
 
 // Appelé quand le contexte GL est prêt
@@ -34,6 +34,47 @@ gboolean on_move_ship(gpointer user_data)
     Simu* simu = user_data;
     updateSimu(simu);
     gtk_widget_queue_draw(GTK_WIDGET(simu->ui.area));
+    return TRUE;
+}
+
+static void on_unrealize(GtkGLArea* area, gpointer user_data)
+{
+    Simu* simu = user_data;
+    if (simu->state == PLAY)
+    {
+        g_source_remove(simu->event);
+        simu->event = 0;
+        simu->state = PAUSE;
+    }
+    gtk_gl_area_make_current(area);
+    freeSimu(*simu);
+}
+
+gboolean on_button_press(GtkWidget* widget, GdkEventButton* event,
+                         gpointer user_data)
+{
+    Simu* simu = user_data;
+    if      (event->button == 1) simu->mouse_mode = 1;
+    else if (event->button == 3) simu->stunned    = !simu->stunned;
+    simu->mouse_x = (int)event->x;
+    simu->mouse_y = (int)event->y;
+    return TRUE;
+}
+
+gboolean on_button_release(GtkWidget* widget, GdkEventButton* event,
+                            gpointer user_data)
+{
+    if (event->button == 1)
+        ((Simu*)user_data)->mouse_mode = 0;
+    return TRUE;
+}
+
+gboolean on_motion_notify(GtkWidget* widget, GdkEventMotion* event,
+                           gpointer user_data)
+{
+    Simu* simu = user_data;
+    simu->mouse_x = (int)event->x;
+    simu->mouse_y = (int)event->y;
     return TRUE;
 }
 
@@ -96,15 +137,20 @@ int main(int argc, char* argv[])
 
     Simu simu = getNewSimu(window, area, width, height, ship_number);
 
-    g_signal_connect(area,   "realize",       G_CALLBACK(on_realize),  &simu);
-    g_signal_connect(area,   "render",        G_CALLBACK(on_draw),     &simu);
+    g_signal_connect(area,   "realize",       G_CALLBACK(on_realize),   &simu);
+    g_signal_connect(area,   "render",        G_CALLBACK(on_draw),      &simu);
+    g_signal_connect(area,   "unrealize",     G_CALLBACK(on_unrealize), &simu);
     g_signal_connect(window, "destroy",       G_CALLBACK(gtk_main_quit), NULL);
     g_signal_connect(window, "key_press_event", G_CALLBACK(on_key_press), &simu);
+
+    gtk_widget_add_events(GTK_WIDGET(area),
+        GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK);
+    g_signal_connect(area, "button-press-event",   G_CALLBACK(on_button_press),   &simu);
+    g_signal_connect(area, "button-release-event", G_CALLBACK(on_button_release), &simu);
+    g_signal_connect(area, "motion-notify-event",  G_CALLBACK(on_motion_notify),  &simu);
 
     gtk_widget_show_all(GTK_WIDGET(window));
     g_object_unref(builder);
     gtk_main();
-
-    freeSimu(simu);
     return 0;
 }
