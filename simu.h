@@ -11,6 +11,13 @@ typedef enum State
     PAUSE,
 } State;
 
+typedef enum SpawnMode
+{
+    SPAWN_RANDOM,
+    SPAWN_CIRCLE,
+    SPAWN_DISK,
+} SpawnMode;
+
 typedef struct UserInterface
 {
     GtkWindow*  window;
@@ -41,9 +48,9 @@ typedef struct Simu
     int            stunned;    // toggle: ants pick random direction each frame
 } Simu;
 
-struct ship** getShipsList(int n, int width, int height);
+struct ship** getShipsList(int n, int width, int height, SpawnMode mode);
 Simu getNewSimu(GtkWindow* window, GtkGLArea* area,
-                int width, int height, int shipNumber);
+                int width, int height, int shipNumber, SpawnMode mode);
 void initGL(Simu* simu);
 void updateSimu(Simu* simu);
 void redraw(gpointer user_data);

@@ -108,8 +108,9 @@ static void print_help(const char* prog)
         "GPU-accelerated Physarum slime-mold simulation.\n"
         "\n"
         "Options:\n"
-        "  -n, --ships <N>   Number of agents  (default: %d)\n"
-        "  -h, --help        Show this help and exit\n"
+        "  -n, --ships <N>       Number of agents   (default: %d)\n"
+        "  -s, --spawn <MODE>    Spawn shape: random|circle|disk  (default: random)\n"
+        "  -h, --help            Show this help and exit\n"
         "\n"
         "Controls:\n"
         "  Space             Play / pause the simulation\n"
@@ -131,7 +132,8 @@ static void print_help(const char* prog)
 
 int main(int argc, char* argv[])
 {
-    int ship_number = SHIPNUMBER_DEFAULT;
+    int       ship_number = SHIPNUMBER_DEFAULT;
+    SpawnMode spawn_mode  = SPAWN_RANDOM;
     for(int i = 1; i < argc; i++)
     {
         if(strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0)
@@ -145,6 +147,18 @@ int main(int argc, char* argv[])
             if(ship_number <= 0)
             {
                 g_printerr("Invalid agent count: %s\n", argv[i]);
+                return 1;
+            }
+        }
+        else if((strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "--spawn") == 0) && i + 1 < argc)
+        {
+            const char* mode = argv[++i];
+            if(strcmp(mode, "random") == 0)       spawn_mode = SPAWN_RANDOM;
+            else if(strcmp(mode, "circle") == 0)  spawn_mode = SPAWN_CIRCLE;
+            else if(strcmp(mode, "disk") == 0)    spawn_mode = SPAWN_DISK;
+            else
+            {
+                g_printerr("Unknown spawn mode: %s\n  Valid modes: random, circle, disk\n", mode);
                 return 1;
             }
         }
@@ -175,7 +189,7 @@ int main(int argc, char* argv[])
     int height = 900;
     gtk_window_set_default_size(window, width, height);
 
-    Simu simu = getNewSimu(window, area, width, height, ship_number);
+    Simu simu = getNewSimu(window, area, width, height, ship_number, spawn_mode);
 
     g_signal_connect(area,   "realize",       G_CALLBACK(on_realize),   &simu);
     g_signal_connect(area,   "render",        G_CALLBACK(on_draw),      &simu);

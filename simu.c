@@ -2,12 +2,13 @@
 #include <epoxy/gl.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <math.h>
 #include "phero.h"
 #include "ship.h"
 #include "simu.h"
 
 #define DIFFUSION    0.15f
-#define EVAPOFACTOR  0.008f
+#define EVAPOFACTOR  0.009f
 #define MOUSE_RADIUS 25
 #define MOUSE_STRENGTH 2.0f
 
@@ -72,21 +73,56 @@ static GLuint createMouseCS()
 
 // ─── Simulation ───────────────────────────────────────────────────────────────
 
-struct ship** getShipsList(int n, int width, int height)
+struct ship** getShipsList(int n, int width, int height, SpawnMode mode)
 {
     struct ship** res = malloc(n * sizeof(struct ship*));
-    for(int i = 0; i < n; i++)
+    if (mode == SPAWN_CIRCLE)
     {
-        float angle = getNewRandomAngle(0, 359);
-        int   x     = getRandomPosition(0, width);
-        int   y     = getRandomPosition(0, height);
-        res[i] = getNewShip(x, y, angle);
+        float cx = width  / 2.0f;
+        float cy = height / 2.0f;
+        float r  = (float)(width < height ? width : height) / 4.0f;
+        for (int i = 0; i < n; i++)
+        {
+            float angle_rad = (float)i / (float)n * 2.0f * (float)M_PI;
+            float x = cx + cosf(angle_rad) * r;
+            float y = cy + sinf(angle_rad) * r;
+            float angle_deg = (float)i / (float)n * 360.0f;
+            res[i] = getNewShip(x, y, angle_deg);
+        }
+    }
+    else if (mode == SPAWN_DISK)
+    {
+        float cx = width  / 2.0f;
+        float cy = height / 2.0f;
+        float r  = (float)(width < height ? width : height) / 4.0f;
+        for (int i = 0; i < n; i++)
+        {
+            // Uniform sampling inside a disk: sqrt of uniform radius to avoid center clustering
+            float u     = (float)rand() / (float)RAND_MAX;
+            float v     = (float)rand() / (float)RAND_MAX;
+            float rnd_r = r * sqrtf(u);
+            float theta = v * 2.0f * (float)M_PI;
+            float x     = cx + cosf(theta) * rnd_r;
+            float y     = cy + sinf(theta) * rnd_r;
+            float angle = fmodf(theta * 180.0f / (float)M_PI + 180.0f, 360.0f);
+            res[i] = getNewShip(x, y, angle);
+        }
+    }
+    else
+    {
+        for (int i = 0; i < n; i++)
+        {
+            float angle = getNewRandomAngle(0, 359);
+            int   x     = getRandomPosition(0, width);
+            int   y     = getRandomPosition(0, height);
+            res[i] = getNewShip(x, y, angle);
+        }
     }
     return res;
 }
 
 Simu getNewSimu(GtkWindow* window, GtkGLArea* area,
-                int width, int height, int shipNumber)
+                int width, int height, int shipNumber, SpawnMode mode)
 {
     Simu simu =
     {
@@ -100,7 +136,7 @@ Simu getNewSimu(GtkWindow* window, GtkGLArea* area,
             .gl_program = 0,
             .gl_vao     = 0,
         },
-        .ship       = getShipsList(shipNumber, width, height),
+        .ship       = getShipsList(shipNumber, width, height, mode),
         .shipNumber = shipNumber,
         .ship_ssbo  = 0,
         .cs_ships   = 0,
