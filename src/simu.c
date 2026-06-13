@@ -104,7 +104,7 @@ struct ship** getShipsList(int n, int width, int height, SpawnMode mode)
             float theta = v * 2.0f * (float)M_PI;
             float x     = cx + cosf(theta) * rnd_r;
             float y     = cy + sinf(theta) * rnd_r;
-            float angle = fmodf(theta * 180.0f / (float)M_PI + 180.0f, 360.0f);
+            float angle = fmodf((float)rand(), 360.0f);
             res[i] = getNewShip(x, y, angle);
         }
     }

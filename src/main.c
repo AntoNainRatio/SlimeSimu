@@ -185,7 +185,7 @@ int main(int argc, char* argv[])
     GtkWindow*  window = GTK_WINDOW(gtk_builder_get_object(builder, "window"));
     GtkGLArea*  area   = GTK_GL_AREA(gtk_builder_get_object(builder, "drawing_area"));
 
-    int width  = 960;
+    int width  = 1600;
     int height = 960;
     gtk_window_set_default_size(window, width, height);
 
