@@ -2,7 +2,7 @@
 #include <epoxy/gl.h>
 #include <stdlib.h>
 #include <string.h>
-#include "phero.h"
+#include "../include/phero.h"
 
 // ─── Diffusion compute shader ────────────────────────────────────────────────
 // One invocation per pixel. Reads current pheromone texture, writes

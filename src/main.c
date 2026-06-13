@@ -3,11 +3,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "phero.h"
-#include "ship.h"
-#include "simu.h"
+#include "../include/phero.h"
+#include "../include/ship.h"
+#include "../include/simu.h"
 
-#define SHIP_PERIOD      6
+#define SHIP_PERIOD      10
 #define SHIPNUMBER_DEFAULT 15000
 
 // Appelé quand le contexte GL est prêt
@@ -185,8 +185,8 @@ int main(int argc, char* argv[])
     GtkWindow*  window = GTK_WINDOW(gtk_builder_get_object(builder, "window"));
     GtkGLArea*  area   = GTK_GL_AREA(gtk_builder_get_object(builder, "drawing_area"));
 
-    int width  = 1800;
-    int height = 900;
+    int width  = 960;
+    int height = 960;
     gtk_window_set_default_size(window, width, height);
 
     Simu simu = getNewSimu(window, area, width, height, ship_number, spawn_mode);

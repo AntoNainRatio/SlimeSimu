@@ -3,12 +3,12 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <math.h>
-#include "phero.h"
-#include "ship.h"
-#include "simu.h"
+#include "../include/phero.h"
+#include "../include/ship.h"
+#include "../include/simu.h"
 
-#define DIFFUSION    0.15f
-#define EVAPOFACTOR  0.009f
+#define DIFFUSION    0.05f
+#define EVAPOFACTOR  0.01f
 #define MOUSE_RADIUS 25
 #define MOUSE_STRENGTH 2.0f
 

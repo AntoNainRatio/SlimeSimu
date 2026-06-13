@@ -2,7 +2,7 @@
 #include <epoxy/gl.h>
 #include <stdlib.h>
 #include <math.h>
-#include "ship.h"
+#include "../include/ship.h"
 
 // ─── Ship compute shader ──────────────────────────────────────────────────────
 // One invocation per ship. Reads pheromone texture for sensing, steers and
@@ -26,12 +26,12 @@ static const char* CS_SHIPS_SRC =
     "uniform int  u_stunned;\n"
     "\n"
     "const float SPEED        = 1.0;\n"
-    "const float SENSOR_DIST  = 10.0;\n"
-    "const float SENSOR_ANGLE = 30.0;\n"
-    "const int   SENSOR_R     = 2;\n"
-    "const float TURN_MIN     = 2.0;\n"
-    "const float TURN_MAX     = 12.0;\n"
-    "const float WANDER       = 4.0;\n"
+    "const float SENSOR_DIST  = 30.0;\n"
+    "const float SENSOR_ANGLE = 18.0;\n"
+    "const int   SENSOR_R     = 3;\n"
+    "const float TURN_MIN     = 17;\n"
+    "const float TURN_MAX     = 19;\n"
+    "const float WANDER       = 2.0;\n"
     "const float PI           = 3.14159265;\n"
     "\n"
     "uint uhash(uint x) {\n"

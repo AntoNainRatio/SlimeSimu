@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = `pkg-config --cflags gtk+-3.0 epoxy` -Wall -O3 -march=native -ffast-math
 LDFLAGS = `pkg-config --libs gtk+-3.0 epoxy` -lm
 TARGET = simu
-SRCS = main.c ship.c phero.c simu.c
+SRCS = src/main.c src/ship.c src/phero.c src/simu.c
 
 all: $(TARGET)
 
